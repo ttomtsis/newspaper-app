@@ -54,7 +54,6 @@ public class CommentController {
 
     /**
      * Creates a new Comment entity in the database. <br>
-     * Only user roles 'JOURNALIST' and 'CURATOR' may use this operation
      *
      * @param newComment The comment object to be saved in the database
      * @return a CommentModel representing the newly created resource.
