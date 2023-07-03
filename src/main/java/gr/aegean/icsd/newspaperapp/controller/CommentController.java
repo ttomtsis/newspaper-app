@@ -53,6 +53,7 @@ public class CommentController {
      */
     @PostMapping(baseMapping)
     public ResponseEntity<CommentModel> createComment(@RequestBody Comment newComment) {
+        log.info("New 'create comment' Request");
         return null;
     }
 
@@ -65,6 +66,7 @@ public class CommentController {
      */
     @PutMapping(baseMapping + "/{id}")
     public ResponseEntity<CommentModel> updateComment(@PathVariable long id, @RequestBody Comment updatedComment) {
+        log.info("New 'update comment' Request");
         return null;
     }
 
@@ -86,6 +88,7 @@ public class CommentController {
                                                                              @RequestParam(defaultValue = "0") int page,
                                                                              @RequestParam(defaultValue = "10") int size,
                                                                              @RequestParam(defaultValue = "ASC") SortType sortType ) {
+        log.info("New 'show all comments for a story' Request");
         return null;
     }
 
@@ -98,6 +101,7 @@ public class CommentController {
      */
     @PatchMapping(baseMapping + "/{id}")
     public ResponseEntity<CommentModel> updateCommentState(@PathVariable long id, @RequestBody String state) {
+        log.info("New 'update comment's state' Request");
         return null;
     }
 }
