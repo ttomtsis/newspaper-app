@@ -100,7 +100,7 @@ public class CommentController {
      * @return a CommentModel representing the new version updated resource
      */
     @PatchMapping(baseMapping + "/{id}")
-    public ResponseEntity<CommentModel> updateCommentState(@PathVariable long id, @RequestBody String state) {
+    public ResponseEntity<CommentModel> updateCommentState(@PathVariable long id, @RequestBody CommentState state) {
         log.info("New 'update comment's state' Request");
         return null;
     }
