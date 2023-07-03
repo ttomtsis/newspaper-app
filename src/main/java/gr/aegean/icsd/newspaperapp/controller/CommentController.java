@@ -12,13 +12,11 @@ import org.springframework.hateoas.PagedModel;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.UUID;
-
 /**
  * Controller that handles requests related to the 'Comment' resource. <br>
  * Maps all operations, except showAllCommentsForAStory, at 'api/v0/comments' <br>
  * showAllCommentsForAStory is exposed at '/api/v0/stories/{id}/comments'
- * @see #showAllCommentsForAStory(UUID, int, int, SortType)
+ * @see #showAllCommentsForAStory(long, int, int, SortType)
  */
 @RestController
 public class CommentController {
@@ -66,7 +64,7 @@ public class CommentController {
      * @return a CommentModel representing the new version updated resource
      */
     @PutMapping(baseMapping + "/{id}")
-    public ResponseEntity<CommentModel> updateComment(@PathVariable UUID id, @RequestBody Comment updatedComment) {
+    public ResponseEntity<CommentModel> updateComment(@PathVariable long id, @RequestBody Comment updatedComment) {
         return null;
     }
 
@@ -80,11 +78,11 @@ public class CommentController {
      * @param size size of the requested page
      * @param sortType type of sorting that the comments will have.
      *                 Only Sorted according to creation date
-     * @return a PagedModel containing the Comment representations and the links
-     * to navigate it
+     * @return a PagedModel containing the Comment representations, sorted by their creation date in
+     * ascending order, and the links to navigate it
      */
     @GetMapping("api/v0/stories/{storyId}/comments")
-    public ResponseEntity<PagedModel<CommentModel>> showAllCommentsForAStory(@PathVariable UUID storyId,
+    public ResponseEntity<PagedModel<CommentModel>> showAllCommentsForAStory(@PathVariable long storyId,
                                                                              @RequestParam(defaultValue = "0") int page,
                                                                              @RequestParam(defaultValue = "10") int size,
                                                                              @RequestParam(defaultValue = "ASC") SortType sortType ) {
@@ -95,11 +93,11 @@ public class CommentController {
      * Updates the 'content' field of a specific Comment.
      *
      * @param id the id of the Comment entity that is going to be updated
-     * @param newState the new state that will replace the older one
+     * @param state the new state that will replace the older one
      * @return a CommentModel representing the new version updated resource
      */
     @PatchMapping(baseMapping + "/{id}")
-    public ResponseEntity<CommentModel> updateCommentState(@PathVariable UUID id, @RequestParam CommentState newState) {
+    public ResponseEntity<CommentModel> updateCommentState(@PathVariable long id, @RequestBody String state) {
         return null;
     }
 }
