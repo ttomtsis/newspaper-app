@@ -69,10 +69,10 @@ public class CommentController {
      *
      * @param id the id of the Comment entity that is going to be updated
      * @param updatedComment a Comment, containing the updated Content, that will replace the older one
-     * @return a CommentModel representing the new version updated resource
+     * @return {@link org.springframework.http.HttpStatus#NO_CONTENT 204 Status Code}
      */
     @PutMapping(baseMapping + "/{id}")
-    public ResponseEntity<CommentModel> updateComment(@PathVariable long id, @RequestBody Comment updatedComment) {
+    public ResponseEntity<Void> updateComment(@PathVariable long id, @RequestBody Comment updatedComment) {
         log.info("New 'update comment' Request");
         return null;
     }
@@ -82,10 +82,10 @@ public class CommentController {
      * Because the parent resource of the comment Entity is a story,
      * this Endpoint is mapped at 'api/v0/stories/{storyId}/comments'
      *
-     * @param storyId the id of the Story entity that contains the comments
-     * @param page number of the page the client has requested
-     * @param size size of the requested page
-     * @param sortType type of sorting that the comments will have.
+     * @param storyId ID of the Story entity that contains the comments
+     * @param page Number of the page the client has requested
+     * @param size Size of the requested page
+     * @param sortType Type of sorting that the comments will have.
      *                 Only Sorted according to creation date
      * @return a PagedModel containing the Comment representations, sorted by their creation date in
      * ascending order, and the links to navigate it
@@ -106,10 +106,10 @@ public class CommentController {
      *
      * @param id The id of the comment whose state will be updated
      * @param state The new state of the comment
-     * @return A CommentModel representation of the updated comment
+     * @return {@link org.springframework.http.HttpStatus#NO_CONTENT 204 Status Code}
      */
     @PatchMapping(baseMapping + "/{id}")
-    public ResponseEntity<CommentModel> updateCommentState(@PathVariable long id, @RequestBody CommentState state) {
+    public ResponseEntity<Void> updateCommentState(@PathVariable long id, @RequestBody CommentState state) {
         log.info("New 'update comment's state' Request");
         return null;
     }
