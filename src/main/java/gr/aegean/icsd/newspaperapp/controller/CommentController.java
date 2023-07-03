@@ -34,6 +34,10 @@ public class CommentController {
     */
     private final String baseMapping = "/api/v0/comments";
 
+    /** Default size of the response page, <br> only applies to
+     endpoints that include a page as their response */
+    private final String defaultPageSize = "10";
+
     /**
      * Sole constructor, never used implicitly <br>
      * Instantiates the CommentService, to forward requests to the service layer
@@ -90,7 +94,7 @@ public class CommentController {
     @GetMapping("api/v0/stories/{storyId}/comments")
     public ResponseEntity<PagedModel<CommentModel>> showAllCommentsForAStory(@PathVariable long storyId,
                                                                              @RequestParam(defaultValue = "0") int page,
-                                                                             @RequestParam(defaultValue = "10") int size,
+                                                                             @RequestParam(defaultValue = defaultPageSize) int size,
                                                                              @RequestParam(defaultValue = "ASC") SortType sortType ) {
         log.info("New 'show all comments for a story' Request");
         return null;
