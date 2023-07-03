@@ -26,9 +26,12 @@ public class CommentController {
 
     private static final Logger log = LoggerFactory.getLogger("CommentController");
 
-    /* Using the baseMapping string instead of the RequestMapping annotation
-    * at the class level, solely because of the special mapping required by
-    * the showAllCommentsForAStory method */
+    /**
+    * The baseMapping string is used instead of the RequestMapping annotation
+    * at the class level, <br> solely because of the special mapping required by
+    * the showAllCommentsForAStory method.
+    * @see #showAllCommentsForAStory(long, int, int, SortType)
+    */
     private final String baseMapping = "/api/v0/comments";
 
     /**
