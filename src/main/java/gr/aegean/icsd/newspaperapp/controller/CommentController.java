@@ -95,7 +95,7 @@ public class CommentController {
 
     /**
      * Update the state of a comment <br>
-     * Valid topic states are defined in the {@link CommentState} enum
+     * Valid comment states are defined in the {@link CommentState} enum
      * @see gr.aegean.icsd.newspaperapp.util.enums.CommentState
      *
      * @param id The id of the comment whose state will be updated
