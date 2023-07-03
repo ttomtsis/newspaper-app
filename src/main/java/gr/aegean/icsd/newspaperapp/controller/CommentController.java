@@ -6,6 +6,7 @@ import gr.aegean.icsd.newspaperapp.model.representation.comment.CommentModelAsse
 import gr.aegean.icsd.newspaperapp.model.service.CommentService;
 import gr.aegean.icsd.newspaperapp.util.enums.CommentState;
 import gr.aegean.icsd.newspaperapp.util.enums.SortType;
+import gr.aegean.icsd.newspaperapp.util.enums.TopicState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.hateoas.PagedModel;
@@ -93,11 +94,13 @@ public class CommentController {
     }
 
     /**
-     * Updates the 'content' field of a specific Comment.
+     * Update the state of a comment <br>
+     * Valid topic states are defined in the {@link CommentState} enum
+     * @see gr.aegean.icsd.newspaperapp.util.enums.CommentState
      *
-     * @param id the id of the Comment entity that is going to be updated
-     * @param state the new state that will replace the older one
-     * @return a CommentModel representing the new version updated resource
+     * @param id The id of the comment whose state will be updated
+     * @param state The new state of the comment
+     * @return A CommentModel representation of the updated comment
      */
     @PatchMapping(baseMapping + "/{id}")
     public ResponseEntity<CommentModel> updateCommentState(@PathVariable long id, @RequestBody CommentState state) {
