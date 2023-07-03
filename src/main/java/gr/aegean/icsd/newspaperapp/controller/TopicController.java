@@ -54,32 +54,14 @@ public class TopicController {
     }
 
     /**
-     * Searches for topics whose names are similar to the topic of the name provided <br>
-     * This method is different from {@link #showTopic} since it returns all the topics
-     * whose name is similar to the one provided
-     * @see #showTopic(long)
-     *
-     * @param name The name of the provided topic
-     * @return a PagedModel containing all the TopicModels of the topics matching the
-     * provided name as well as links to navigate the PagedModel
-     */
-    @GetMapping("/search")
-    public ResponseEntity<PagedModel<TopicModel>> searchTopicByName(@RequestParam String name,
-                                                                    @RequestParam(defaultValue = "0") int page,
-                                                                    @RequestParam(defaultValue = defaultPageSize) int size) {
-        log.info("New 'search topic by name' Request");
-        return null;
-    }
-
-    /**
      * Updates a specific topic <br>
      *
      * @param id The id of the topic that will be updated
      * @param updatedTopic The topic containing the updated values
-     * @return a TopicModel representation of the topic that has been updated
+     * @return {@link org.springframework.http.HttpStatus#NO_CONTENT 204 Status Code}
      */
     @PutMapping("/{id}")
-    public ResponseEntity<TopicModel> updateTopic(@PathVariable long id, @RequestBody Topic updatedTopic) {
+    public ResponseEntity<Void> updateTopic(@PathVariable long id, @RequestBody Topic updatedTopic) {
         log.info("New 'update topic' Request");
         return null;
     }
@@ -97,15 +79,24 @@ public class TopicController {
     }
 
     /**
-     * Display all topics <br>
+     * Display all topics saved in the database<br>
+     * or if a name has been provided, display all topics matching that name.
      *
+     * @param name Optional parameter, if provided will display a list of Topics whose name matches
+     *             the parameter's
      * @return a PagedModel containing all the TopicModels of the topics
      * as well as links to navigate the PagedModel
      */
     @GetMapping
-    public ResponseEntity<PagedModel<TopicModel>> showAllTopics(@RequestParam(defaultValue = "0") int page,
+    public ResponseEntity<PagedModel<TopicModel>> showAllTopics(@RequestBody(required = false) String name,
+                                                                @RequestParam(defaultValue = "0") int page,
                                                                 @RequestParam(defaultValue = defaultPageSize) int size) {
-        log.info("New 'show all topics' Request");
+        if ( name != null ) {
+            log.info("New 'show all topics matching name' Request");
+        }
+        else {
+            log.info("New 'show all topics' Request");
+        }
         return null;
     }
 
@@ -116,10 +107,10 @@ public class TopicController {
      *
      * @param id The id of the topic whose state will be updated
      * @param state The new state of the topic
-     * @return A TopicModel representation of the updated topic
+     * @return {@link org.springframework.http.HttpStatus#NO_CONTENT 204 Status Code}
      */
     @PatchMapping("/{id}")
-    public ResponseEntity<TopicModel> updateTopicState(@PathVariable long id, @RequestBody TopicState state) {
+    public ResponseEntity<Void> updateTopicState(@PathVariable long id, @RequestBody TopicState state) {
         log.info("New 'update topic state' Request");
         return null;
     }
