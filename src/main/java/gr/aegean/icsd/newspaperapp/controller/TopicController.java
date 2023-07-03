@@ -32,7 +32,7 @@ public class TopicController {
      * and the TopicModelAssembler to create representations of the Topic resource
      * @param topicService Service Implementation for the Topic entity
      * @param topicModelAssembler Representation Model Assembler, used to create
-     *                              the representations of the Topic resource, that
+     *                              representations of the Topic resource, that
      *                              will be sent to the client
      */
     public TopicController(TopicService topicService, TopicModelAssembler topicModelAssembler) {

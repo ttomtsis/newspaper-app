@@ -44,7 +44,7 @@ public class CommentController {
      * and the CommentModelAssembler to create representations of the Comment resource
      * @param commentService Service Implementation for the Comment entity
      * @param commentModelAssembler Representation Model Assembler, used to create
-     *                              the representations of the Comment resource, that
+     *                              representations of the Comment resource, that
      *                              will be sent to the client
      */
     public CommentController(CommentService commentService, CommentModelAssembler commentModelAssembler) {
