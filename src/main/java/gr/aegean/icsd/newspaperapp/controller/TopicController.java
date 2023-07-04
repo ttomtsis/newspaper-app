@@ -1,19 +1,22 @@
 package gr.aegean.icsd.newspaperapp.controller;
 
+import gr.aegean.icsd.newspaperapp.model.entity.Comment;
 import gr.aegean.icsd.newspaperapp.model.entity.Topic;
 import gr.aegean.icsd.newspaperapp.model.representation.topic.TopicModel;
 import gr.aegean.icsd.newspaperapp.model.representation.topic.TopicModelAssembler;
 import gr.aegean.icsd.newspaperapp.model.service.TopicService;
+import gr.aegean.icsd.newspaperapp.util.enums.CommentState;
 import gr.aegean.icsd.newspaperapp.util.enums.TopicState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.hateoas.PagedModel;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 /**
  * Controller that handles requests related to the 'Topic' resource. <br>
- * Maps all operations, except showAllCommentsForAStory, at 'api/v0/topics' <br>
+ * Maps all operations at 'api/v0/topics' <br>
  */
 @RestController
 @RequestMapping(value = "api/v0/topics")
@@ -50,7 +53,7 @@ public class TopicController {
     @PostMapping
     public ResponseEntity<TopicModel> createTopic(@RequestBody Topic newTopic) {
         log.info("New 'create topic' Request");
-        return null;
+        return new ResponseEntity<>(null, HttpStatus.CREATED);
     }
 
     /**
@@ -63,7 +66,7 @@ public class TopicController {
     @PutMapping("/{id}")
     public ResponseEntity<Void> updateTopic(@PathVariable long id, @RequestBody Topic updatedTopic) {
         log.info("New 'update topic' Request");
-        return null;
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
     /**
@@ -75,7 +78,7 @@ public class TopicController {
     @GetMapping("/{id}")
     public ResponseEntity<TopicModel> showTopic(@PathVariable long id) {
         log.info("New 'show topic' Request");
-        return null;
+        return new ResponseEntity<>(null, HttpStatus.OK);
     }
 
     /**
@@ -97,21 +100,38 @@ public class TopicController {
         else {
             log.info("New 'show all topics' Request");
         }
-        return null;
+        return new ResponseEntity<>(null, HttpStatus.OK);
     }
 
     /**
-     * Update the state of a topic <br>
-     * Valid topic states are defined in the {@link TopicState} enum
-     * @see gr.aegean.icsd.newspaperapp.util.enums.TopicState
+     * Update the state of a Topic to {@link TopicState#APPROVED APPROVED} <br>
+     * Since Topics can only exist in two states ( SUBMITTED and APPROVED ),
+     * and SUBMITTED is the initial state of every Topic, the only possible
+     * state change is from SUBMITTED to APPROVED hence the client request
+     * requires an empty PATCH document. <br>
      *
-     * @param id The id of the topic whose state will be updated
-     * @param state The new state of the topic
+     * All valid Topic states are defined in the {@link TopicState} enum
+     * @see Topic
+     * @see TopicState
+     *
+     * @param id The id of the Topic whose state will be updated
      * @return {@link org.springframework.http.HttpStatus#NO_CONTENT 204 Status Code}
      */
     @PatchMapping("/{id}")
-    public ResponseEntity<Void> updateTopicState(@PathVariable long id, @RequestBody TopicState state) {
+    public ResponseEntity<Void> approveTopic(@PathVariable long id) {
         log.info("New 'update topic state' Request");
-        return null;
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
+
+    /**
+     * Delete a Topic. ( When a Topic is rejected it is automatically deleted )
+     * @param id ID of the Topic that will be deleted
+     * @return {@link org.springframework.http.HttpStatus#NO_CONTENT 204 Status Code}
+     */
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> rejectTopic(@PathVariable long id) {
+        log.info("New 'delete topic' Request");
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    }
+
 }

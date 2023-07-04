@@ -10,13 +10,13 @@ import gr.aegean.icsd.newspaperapp.util.enums.TopicState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.hateoas.PagedModel;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 /**
  * Controller that handles requests related to the 'Comment' resource. <br>
- * Maps all operations, except showAllCommentsForAStory, at 'api/v0/comments' <br>
- * showAllCommentsForAStory is exposed at '/api/v0/stories/{id}/comments'
+ * Maps all operations, except {@link #showAllCommentsForAStory(long, int, int, SortType) showAllCommentsForAStory}, at 'api/v0/comments' <br>
  * @see #showAllCommentsForAStory(long, int, int, SortType)
  */
 @RestController
@@ -61,7 +61,7 @@ public class CommentController {
     @PostMapping(baseMapping)
     public ResponseEntity<CommentModel> createComment(@RequestBody Comment newComment) {
         log.info("New 'create comment' Request");
-        return null;
+        return new ResponseEntity<>(null, HttpStatus.CREATED);
     }
 
     /**
@@ -74,7 +74,7 @@ public class CommentController {
     @PutMapping(baseMapping + "/{id}")
     public ResponseEntity<Void> updateComment(@PathVariable long id, @RequestBody Comment updatedComment) {
         log.info("New 'update comment' Request");
-        return null;
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
     /**
@@ -96,21 +96,37 @@ public class CommentController {
                                                                              @RequestParam(defaultValue = defaultPageSize) int size,
                                                                              @RequestParam(defaultValue = "ASC") SortType sortType ) {
         log.info("New 'show all comments for a story' Request");
-        return null;
+        return new ResponseEntity<>(null, HttpStatus.OK);
     }
 
     /**
-     * Update the state of a comment <br>
-     * Valid comment states are defined in the {@link CommentState} enum
-     * @see gr.aegean.icsd.newspaperapp.util.enums.CommentState
+     * Update the state of a Comment to {@link CommentState#APPROVED APPROVED} <br>
+     * Since Comments can only exist in two states ( SUBMITTED and APPROVED ),
+     * and SUBMITTED is the initial state of every Comment, the only possible
+     * state change is from SUBMITTED to APPROVED hence the client request
+     * requires an empty PATCH document. <br>
+     *
+     * All valid comment states are defined in the {@link CommentState} enum
+     * @see Comment
+     * @see CommentState
      *
      * @param id The id of the comment whose state will be updated
-     * @param state The new state of the comment
      * @return {@link org.springframework.http.HttpStatus#NO_CONTENT 204 Status Code}
      */
     @PatchMapping(baseMapping + "/{id}")
-    public ResponseEntity<Void> updateCommentState(@PathVariable long id, @RequestBody CommentState state) {
+    public ResponseEntity<Void> approveComment(@PathVariable long id) {
         log.info("New 'update comment's state' Request");
-        return null;
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    }
+
+    /**
+     * Delete a Comment. ( When a Comment is rejected it is automatically deleted )
+     * @param id ID of the Comment that will be deleted
+     * @return {@link org.springframework.http.HttpStatus#NO_CONTENT 204 Status Code}
+     */
+    @DeleteMapping(baseMapping + "/{id}")
+    public ResponseEntity<Void> rejectComment(@PathVariable long id) {
+        log.info("New 'delete comment' Request");
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 }
