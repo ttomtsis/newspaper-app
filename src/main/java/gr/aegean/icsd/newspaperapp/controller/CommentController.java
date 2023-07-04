@@ -58,7 +58,7 @@ public class CommentController {
      * @param newComment The comment object to be saved in the database
      * @return a CommentModel representing the newly created resource.
      */
-    @PostMapping(baseMapping)
+    @PostMapping(path = baseMapping, consumes = "application/json", produces = "application/json")
     public ResponseEntity<CommentModel> createComment(@RequestBody Comment newComment) {
         log.info("New 'create comment' Request");
         return new ResponseEntity<>(null, HttpStatus.CREATED);
@@ -71,7 +71,7 @@ public class CommentController {
      * @param updatedComment a Comment, containing the updated Content, that will replace the older one
      * @return {@link org.springframework.http.HttpStatus#NO_CONTENT 204 Status Code}
      */
-    @PutMapping(baseMapping + "/{id}")
+    @PutMapping(path = baseMapping + "/{id}", consumes = "application/json")
     public ResponseEntity<Void> updateComment(@PathVariable long id, @RequestBody Comment updatedComment) {
         log.info("New 'update comment' Request");
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
@@ -90,7 +90,7 @@ public class CommentController {
      * @return a PagedModel containing the Comment representations, sorted by their creation date in
      * ascending order, and the links to navigate it
      */
-    @GetMapping("api/v0/stories/{storyId}/comments")
+    @GetMapping(path = "api/v0/stories/{storyId}/comments", produces = "application/json")
     public ResponseEntity<PagedModel<CommentModel>> showAllCommentsForAStory(@PathVariable long storyId,
                                                                              @RequestParam(defaultValue = "0") int page,
                                                                              @RequestParam(defaultValue = defaultPageSize) int size,
