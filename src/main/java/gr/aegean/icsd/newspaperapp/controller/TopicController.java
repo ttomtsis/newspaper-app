@@ -50,7 +50,7 @@ public class TopicController {
      * @param newTopic The comment object to be saved in the database
      * @return a TopicModel representing the newly created resource.
      */
-    @PostMapping
+    @PostMapping(consumes = "application/json", produces = "application/json")
     public ResponseEntity<TopicModel> createTopic(@RequestBody Topic newTopic) {
         log.info("New 'create topic' Request");
         return new ResponseEntity<>(null, HttpStatus.CREATED);
@@ -63,7 +63,7 @@ public class TopicController {
      * @param updatedTopic The topic containing the updated values
      * @return {@link org.springframework.http.HttpStatus#NO_CONTENT 204 Status Code}
      */
-    @PutMapping("/{id}")
+    @PutMapping(path = "/{id}", consumes = "application/json")
     public ResponseEntity<Void> updateTopic(@PathVariable long id, @RequestBody Topic updatedTopic) {
         log.info("New 'update topic' Request");
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
@@ -75,23 +75,34 @@ public class TopicController {
      * @param id The id of the topic
      * @return a TopicModel representation of the requested topic
      */
-    @GetMapping("/{id}")
+    @GetMapping(path = "/{id}")
     public ResponseEntity<TopicModel> showTopic(@PathVariable long id) {
         log.info("New 'show topic' Request");
         return new ResponseEntity<>(null, HttpStatus.OK);
     }
 
     /**
-     * Display all topics saved in the database<br>
-     * or if a name has been provided, display all topics matching that name.
+     * Display all topics saved in the database
      *
-     * @param name Optional parameter, if provided will display a list of Topics whose name matches
-     *             the parameter's
      * @return a PagedModel containing all the TopicModels of the topics
      * as well as links to navigate the PagedModel
      */
     @GetMapping
-    public ResponseEntity<PagedModel<TopicModel>> showAllTopics(@RequestBody(required = false) String name,
+    public ResponseEntity<PagedModel<TopicModel>> showAllTopics(@RequestParam(defaultValue = "0") int page,
+                                                                @RequestParam(defaultValue = defaultPageSize) int size) {
+        log.info("New 'show all topics' Request");
+        return new ResponseEntity<>(null, HttpStatus.OK);
+    }
+
+    /**
+     * Display all topics matching the provided name.
+     *
+     * @param name The specified Topic name
+     * @return a PagedModel containing all the TopicModels of the topics
+     * as well as links to navigate the PagedModel
+     */
+    @GetMapping(params = "name")
+    public ResponseEntity<PagedModel<TopicModel>> showAllTopicsByName(@RequestParam String name,
                                                                 @RequestParam(defaultValue = "0") int page,
                                                                 @RequestParam(defaultValue = defaultPageSize) int size) {
         if ( name != null ) {
