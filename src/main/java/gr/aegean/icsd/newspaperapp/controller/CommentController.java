@@ -6,7 +6,6 @@ import gr.aegean.icsd.newspaperapp.model.representation.comment.CommentModelAsse
 import gr.aegean.icsd.newspaperapp.model.service.CommentService;
 import gr.aegean.icsd.newspaperapp.util.enums.CommentState;
 import gr.aegean.icsd.newspaperapp.util.enums.SortType;
-import gr.aegean.icsd.newspaperapp.util.enums.TopicState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.hateoas.PagedModel;
