@@ -1,0 +1,7 @@
+package gr.aegean.icsd.newspaperapp.model.repository;
+
+import gr.aegean.icsd.newspaperapp.model.entity.User;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface UserRepository extends JpaRepository<User, Long> {
+}
