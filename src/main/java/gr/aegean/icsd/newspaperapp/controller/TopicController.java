@@ -1,11 +1,9 @@
 package gr.aegean.icsd.newspaperapp.controller;
 
-import gr.aegean.icsd.newspaperapp.model.entity.Comment;
 import gr.aegean.icsd.newspaperapp.model.entity.Topic;
 import gr.aegean.icsd.newspaperapp.model.representation.topic.TopicModel;
 import gr.aegean.icsd.newspaperapp.model.representation.topic.TopicModelAssembler;
 import gr.aegean.icsd.newspaperapp.model.service.TopicService;
-import gr.aegean.icsd.newspaperapp.util.enums.CommentState;
 import gr.aegean.icsd.newspaperapp.util.enums.TopicState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,7 +24,7 @@ public class TopicController {
 
     /** Default size of the response page, <br> only applies to
      endpoints that include a page as their response */
-    private final String defaultPageSize = "10";
+    private static final String defaultPageSize = "10";
     private static final Logger log = LoggerFactory.getLogger("TopicController");
 
     /**

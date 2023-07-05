@@ -31,11 +31,11 @@ public class CommentController {
     * the showAllCommentsForAStory method.
     * @see #showAllCommentsForAStory(long, int, int, SortType)
     */
-    private final String baseMapping = "/api/v0/comments";
+    private static final String baseMapping = "/api/v0/comments";
 
     /** Default size of the response page, <br> only applies to
      endpoints that include a page as their response */
-    private final String defaultPageSize = "10";
+    private static final String defaultPageSize = "10";
 
     /**
      * Sole constructor, never used implicitly <br>
