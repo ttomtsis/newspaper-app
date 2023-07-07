@@ -59,7 +59,7 @@ public class CommentTest {
     }
 
     /**
-     * Test case - EC1
+     * Test case - EC1 <br>
      * Check if comment has valid behaviour, for valid parameters
      */
     @Test
@@ -82,7 +82,7 @@ public class CommentTest {
     }
 
     /**
-     * Test case - EC2
+     * Test case - EC2 <br>
      * Check if comment can be created with constraint violating
      * parameters
      */
@@ -116,7 +116,7 @@ public class CommentTest {
     }
 
     /**
-     * Test case - EC3
+     * Test case - EC3 <br>
      * Check if comment method setContent works appropriately
      */
     @Test
@@ -139,7 +139,7 @@ public class CommentTest {
     }
 
     /**
-     * Test case - EC4
+     * Test case - EC4 <br>
      * Check if comment method setState works appropriately
      */
     @Test
@@ -162,7 +162,7 @@ public class CommentTest {
     }
 
     /**
-     * Test case - EC5
+     * Test case - EC5 <br>
      * Check if deleting a comment affects the parent Story entity
      */
     @Test
@@ -181,7 +181,7 @@ public class CommentTest {
     }
 
     /**
-     * Test case - EC6
+     * Test case - EC6 <br>
      * Check if the generated values are generated properly after persistence
      */
     @Test
@@ -230,6 +230,26 @@ public class CommentTest {
     }
 
     /**
+     * Test case - EC8 <br>
+     * Check whether upon deletion of a User the associated Comments are
+     * deleted as well
+     */
+    @Test
+    public void testDeleteUser() {
+        Comment testComment = new Comment(story, "test", author);
+        entityManager.persist(testComment);
+        entityManager.flush();
+
+        long testCommentID = testComment.getId();
+
+        entityManager.remove(author);
+        entityManager.flush();
+        entityManager.clear();
+
+        assertNull(entityManager.find(Comment.class, testCommentID));
+    }
+
+    /**
      * Test case - EC9 <br>
      * Check if upon update of a Comment's content, the change is reflected
      * in the Story
@@ -257,5 +277,43 @@ public class CommentTest {
 
     }
 
+    /**
+     * Test case - EC10 <br>
+     * Check if upon creating a new Comment, it is automatically added to the
+     * associated Story's Comment set
+     */
+    @Test
+    public void testAutomaticCommentInsert() {
 
+        Comment testComment = new Comment(story, "test");
+        entityManager.persist(testComment);
+        entityManager.flush();
+        entityManager.clear();
+
+        assertTrue(story.getComments().contains(testComment));
+
+    }
+
+
+    /**
+     * Test case - EC11 <br>
+     * Check if setContent and setState function as expected with valid parameters
+     */
+    @Test
+    public void testValidSetStateSetContent() {
+
+        Comment testComment = new Comment(story, "test");
+        entityManager.persist(testComment);
+        entityManager.flush();
+        entityManager.clear();
+
+        testComment.setContent("test content");
+        testComment.setState(CommentState.APPROVED);
+        entityManager.flush();
+        entityManager.clear();
+
+        assertEquals("test content", testComment.getContent());
+        assertEquals(CommentState.APPROVED, testComment.getState());
+
+    }
 }
