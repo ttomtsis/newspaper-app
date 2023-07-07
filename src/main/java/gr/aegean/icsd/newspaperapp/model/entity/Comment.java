@@ -4,12 +4,17 @@ import gr.aegean.icsd.newspaperapp.util.enums.CommentState;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import org.springframework.format.annotation.DateTimeFormat;
 
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.Date;
+import java.util.Optional;
 
+/**
+ * Entity representing the Comment resource
+ */
 @Entity
-@Table(name = "comments")
+@Table(name = "comment")
 public class Comment {
 
     /**
@@ -22,9 +27,11 @@ public class Comment {
     /**
      * Date the Comment was created, assigned by the server
      * before persisting the entity in the database. <br>
-     * Date must strictly be in the format dd/MM/yyyy
+     * Date will be in the format E, dd/MMMM/yyyy, HH:mm:ss
+     * @see #generateCreationDate()
      */
-    @DateTimeFormat(pattern = "dd/MM/yyyy")
+    @Temporal(TemporalType.DATE)
+    @Column(updatable = false, nullable = false)
     private Date creationDate;
 
     /**
@@ -46,8 +53,8 @@ public class Comment {
      * Story that the Comment belongs to <br>
      * Many Comments belong to One Story
      */
-    @ManyToOne(cascade = CascadeType.ALL)
-    @JoinColumn(name = "story", nullable = false)
+    @ManyToOne(cascade = CascadeType.REFRESH)
+    @JoinColumn(name = "story", nullable = false, updatable = false)
     private Story story;
 
     /**
@@ -55,21 +62,33 @@ public class Comment {
      * Many Comments can have the same Author <br>
      * Author may be null
      */
-    @ManyToOne(cascade = CascadeType.ALL)
-    @JoinColumn(name = "author")
+    @ManyToOne(cascade = CascadeType.REFRESH)
+    @JoinColumn(name = "author", updatable = false)
     private User author;
 
+    /**
+     * Constructor used when the Comment's Author is logged into the system
+     * @param authorID ID of the Author
+     * @param storyID ID of the Story this Comment belongs to
+     * @param content Content of the Comment
+     */
+    public Comment(Story storyID, String content, User authorID) {
+        if ( authorID == null ) { throw new RuntimeException("The Author you provided is null"); }
 
-    public Comment(User author, Story story, String content) {
-        this.author = author;
-        this.story = story;
+        this.author = authorID;
+        this.story = storyID;
 
         this.content = content;
         this.state = CommentState.SUBMITTED;
     }
 
-    public Comment(Story story, String content) {
-        this.story = story;
+    /**
+     * Constructor used when the Comment's Author is a Visitor
+     * @param storyID ID of the Story this Comment belongs to
+     * @param content Content of the Comment
+     */
+    public Comment(Story storyID, String content) {
+        this.story = storyID;
 
         this.content = content;
         this.state = CommentState.SUBMITTED;
@@ -77,41 +96,60 @@ public class Comment {
 
     public Comment() {}
 
-
-    // SETTERS
-    public void setCreationDate(Date creationDate) {
-        this.creationDate = creationDate;
+    /**
+     * Generates the {@link #creationDate creationDate} of the Comment <br>
+     * before the Comment is persisted in the database.
+     */
+    @PrePersist
+    private void generateCreationDate() {
+        this.creationDate = Date.from(LocalDateTime.now().toInstant(ZoneOffset.UTC));
     }
 
+    // SETTERS
     public void setContent(String content) {
-        this.content = content;
+        if ( content != null && !content.isBlank()) {
+            this.content = content;
+        }
+        else {
+            throw new RuntimeException("Content cannot be null");
+        }
     }
 
     public void setState(CommentState state) {
-        this.state = state;
+        if (state != null) {
+            this.state = state;
+        }
+        else {
+            throw new RuntimeException("State cannot be null");
+        }
     }
 
     // GETTERS
     public Long getId() {
-        return id;
+        return this.id;
     }
 
+    // Can be null when the Comment has not been persisted yet
+    // Wrap in Optional ?
     public Date getCreationDate() {
         return this.creationDate;
     }
 
+    @NotNull
     public String getContent() {
         return this.content;
     }
 
+    @NotNull
     public CommentState getState() {
         return this.state;
     }
 
-    public User getAuthor() {
-        return this.author;
+    public Optional<User> getAuthor() {
+        return Optional.ofNullable(this.author);
     }
 
+    @NotNull
     public Story getStory() {
         return this.story;
     }
