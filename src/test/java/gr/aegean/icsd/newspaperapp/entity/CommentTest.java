@@ -206,4 +206,56 @@ public class CommentTest {
 
     }
 
+    /**
+     * Test case - EC7 <br>
+     * Check if deleting a story deletes associated comments
+     */
+    @Test
+    public void testDeleteStory() {
+
+        Comment testComment = new Comment(story, "test");
+        entityManager.persist(testComment);
+        entityManager.flush();
+
+        long testCommentID = testComment.getId();
+        long storyID = story.getId();
+
+        entityManager.remove(story);
+        entityManager.flush();
+        entityManager.clear();
+
+        assertNull(entityManager.find(Story.class, storyID));
+        assertNull(entityManager.find(Comment.class, testCommentID));
+
+    }
+
+    /**
+     * Test case - EC9 <br>
+     * Check if upon update of a Comment's content, the change is reflected
+     * in the Story
+     */
+    @Test
+    public void testUpdateStoryCommentList() {
+
+        Comment testComment = new Comment(story, "test");
+        entityManager.persist(testComment);
+        entityManager.flush();
+        entityManager.clear();
+
+        story.addComment(testComment);
+        entityManager.flush();
+        entityManager.clear();
+
+        assertTrue(story.getComments().contains(testComment));
+
+        testComment.setContent("new content");
+        entityManager.flush();
+        entityManager.clear();
+
+        assertEquals("new content",testComment.getContent());
+        assertEquals("new content",story.getComments().stream().toList().get(0).getContent());
+
+    }
+
+
 }
