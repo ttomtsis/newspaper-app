@@ -9,10 +9,7 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface CommentRepository extends JpaRepository<Comment, Long> {
 
-    // UPDATE table_name
-    //SET column1 = value1, column2 = value2, ...
-    //WHERE condition;
     @Modifying
-    @Query("update comments set content = ?1 where id = ?2")
+    @Query("update Comment set content = ?1 where id = ?2")
     void updateCommentById(String firstname, long id);
 }
