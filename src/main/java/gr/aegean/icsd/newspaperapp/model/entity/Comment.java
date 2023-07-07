@@ -4,6 +4,8 @@ import gr.aegean.icsd.newspaperapp.util.enums.CommentState;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
@@ -54,8 +56,9 @@ public class Comment {
      * Many Comments belong to One Story
      */
     @ManyToOne(cascade = CascadeType.REFRESH)
-    @JoinColumn(name = "story", nullable = false, updatable = false)
-    private Story story;
+    @JoinColumn(name = "STORY_ID", nullable = false, updatable = false)
+    @OnDelete(action = OnDeleteAction.CASCADE)
+    private Story storyID;
 
     /**
      * Author of the Comment. <br>
@@ -63,8 +66,9 @@ public class Comment {
      * Author may be null
      */
     @ManyToOne(cascade = CascadeType.REFRESH)
-    @JoinColumn(name = "author", updatable = false)
-    private User author;
+    @JoinColumn(name = "AUTHOR_ID", updatable = false)
+    @OnDelete(action = OnDeleteAction.CASCADE)
+    private User authorID;
 
     /**
      * Constructor used when the Comment's Author is logged into the system
@@ -75,8 +79,8 @@ public class Comment {
     public Comment(Story storyID, String content, User authorID) {
         if ( authorID == null ) { throw new RuntimeException("The Author you provided is null"); }
 
-        this.author = authorID;
-        this.story = storyID;
+        this.authorID = authorID;
+        this.storyID = storyID;
 
         this.content = content;
         this.state = CommentState.SUBMITTED;
@@ -88,7 +92,7 @@ public class Comment {
      * @param content Content of the Comment
      */
     public Comment(Story storyID, String content) {
-        this.story = storyID;
+        this.storyID = storyID;
 
         this.content = content;
         this.state = CommentState.SUBMITTED;
@@ -146,11 +150,11 @@ public class Comment {
     }
 
     public Optional<User> getAuthor() {
-        return Optional.ofNullable(this.author);
+        return Optional.ofNullable(this.authorID);
     }
 
     @NotNull
     public Story getStory() {
-        return this.story;
+        return this.storyID;
     }
 }
