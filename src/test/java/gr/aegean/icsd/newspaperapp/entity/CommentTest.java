@@ -4,6 +4,7 @@ import gr.aegean.icsd.newspaperapp.model.entity.Comment;
 import gr.aegean.icsd.newspaperapp.model.entity.Story;
 import gr.aegean.icsd.newspaperapp.model.entity.User;
 import gr.aegean.icsd.newspaperapp.util.enums.CommentState;
+import gr.aegean.icsd.newspaperapp.util.enums.UserType;
 import jakarta.validation.ConstraintViolationException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -48,11 +49,11 @@ public class CommentTest {
      */
     @BeforeEach
     protected void initialize() {
-        story = new Story();
-        author = new User();
+        author = new User("testName", "testPassword", UserType.CURATOR);
+        story = new Story("testStory", author, "testContent");
 
-        entityManager.persist(story);
         entityManager.persist(author);
+        entityManager.persist(story);
         entityManager.flush();
 
         log.info("Author and Story created with authorID: " + this.author.getId() + " and storyID: " + this.story.getId());
@@ -102,7 +103,7 @@ public class CommentTest {
         assertThrows(ConstraintViolationException.class, () -> entityManager.persist(new Comment(story, "   ")));
 
         log.info("Testing scenario: Create Comment with null Story");
-        assertThrows(ConstraintViolationException.class, () -> entityManager.persist(new Comment(null, "test")));
+        assertThrows(org.hibernate.exception.ConstraintViolationException.class, () -> entityManager.persist(new Comment(null, "test")));
 
         log.info("Testing scenario: Create Comment with non-existing Story");
         assertThrows(IllegalStateException.class, () -> entityManager.persist(new Comment(new Story(), "test")));
@@ -364,4 +365,52 @@ public class CommentTest {
         assertEquals(CommentState.APPROVED, testComment.getState());
 
     }
+
+    /**
+     * Test case - EC11 <br>
+     * Check if a Comment's content can be greater than maximum length <br>
+     * Also checks if setContent can violate the above constraint
+     */
+    @Test
+    public void testCreateCommentWithLargeContent() {
+        String largeContent = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. " +
+                "Nam euismod, tortor nec pharetra ultricies, ante erat imperdiet velit, nec" +
+                " laoreet enim lacus a velit. Nam elementum ullamcorper orci, ac porttitor velit" +
+                " commodo ut. Sed quis nisl elementum, bibendum est at, porta erat. In hac habitasse" +
+                " platea dictumst. Vivamus eget nibh id lacus mollis placerat. Nulla facilisi. Donec lacinia" +
+                " congue felis in faucibus. Nunc non tincidunt neque, eu ultrices arcu. Praesent vel" +
+                "congue felis in faucibus. Nunc non tincidunt neque, eu ultrices arcu. Praesent vel" +
+                "congue felis in faucibus. Nunc non tincidunt neque, eu ultrices arcu. Praesent vel" +
+                "congue felis in faucibus. Nunc non tincidunt neque, eu ultrices arcu. Praesent vel.";
+
+        assertThrows(ConstraintViolationException.class, () -> entityManager.persist(new Comment(story,largeContent)));
+
+        entityManager.clear();
+
+        Comment testComment = new Comment(story, "test");
+        entityManager.persist(testComment);
+        entityManager.flush();
+
+        assertThrows(RuntimeException.class, () -> testComment.setContent(largeContent));
+
+    }
+
+    /**
+     * Test case - EC12 <br>
+     * Check if updating a Story is reflected in the associated Comments <br>
+     */
+    @Test
+    public void testUpdateStoryUpdateComment() {
+        Comment testComment = new Comment(story, "test");
+        entityManager.persist(testComment);
+        entityManager.flush();
+
+        story.setName("Altered name");
+        entityManager.flush();
+
+        entityManager.refresh(testComment);
+
+        assertEquals("Altered name", testComment.getStory().getName());
+    }
+
 }
