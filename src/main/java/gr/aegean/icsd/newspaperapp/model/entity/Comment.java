@@ -4,6 +4,7 @@ import gr.aegean.icsd.newspaperapp.util.enums.CommentState;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
@@ -12,6 +13,8 @@ import java.util.Optional;
 
 /**
  * Entity representing the Comment resource
+ * @see #Comment(Story, String)
+ * @see #Comment(Story, String, User)
  */
 @Entity
 @Table(name = "comment")
@@ -35,12 +38,6 @@ public class Comment {
     private Date creationDate;
 
     /**
-     * Content of the Comment
-     */
-    @NotBlank
-    private String content;
-
-    /**
      * State of the Comment, valid states are declared in
      * {@link CommentState}
      * @see CommentState
@@ -50,11 +47,27 @@ public class Comment {
     private CommentState state;
 
     /**
+     * Sets the maximum allowed length of the Comment's content
+     * @see #content
+     */
+    @Transient
+    private final int maxContentLength = 500;
+
+    /**
+     * Content of the Comment <br>
+     * Content cannot be null, blank or exceed {@link #maxContentLength}
+     * @see #maxContentLength
+     */
+    @Size(max = maxContentLength)
+    @NotBlank
+    private String content;
+
+    /**
      * Story that the Comment belongs to <br>
      * Many Comments belong to One Story
      */
-    @ManyToOne(cascade = CascadeType.REFRESH)
-    @JoinColumn(name = "STORY_ID", nullable = false, updatable = false)
+    @ManyToOne(cascade = CascadeType.REFRESH, targetEntity = Story.class)
+    @JoinColumn(name = "story_id", nullable = false, updatable = false)
     private Story storyID;
 
     /**
@@ -62,8 +75,8 @@ public class Comment {
      * Many Comments can have the same Author <br>
      * Author may be null
      */
-    @ManyToOne(cascade = CascadeType.REFRESH)
-    @JoinColumn(name = "AUTHOR_ID", updatable = false)
+    @ManyToOne(cascade = CascadeType.REFRESH, targetEntity = User.class)
+    @JoinColumn(name = "author_id", updatable = false)
     private User authorID;
 
     /**
@@ -71,6 +84,7 @@ public class Comment {
      * @param authorID ID of the Author
      * @param storyID ID of the Story this Comment belongs to
      * @param content Content of the Comment
+     * @throws RuntimeException If the provided Author is null
      */
     public Comment(Story storyID, String content, User authorID) {
         if ( authorID == null ) { throw new RuntimeException("The Author you provided is null"); }
@@ -109,12 +123,12 @@ public class Comment {
 
     /**
      * Change the content of the comment <br>
-     * New content must not be blank
+     * New content must not be blank or exceed {@link #maxContentLength}
      * @param content New content
      * @throws RuntimeException If content is blank or null
      */
     public void setContent(String content) {
-        if ( content != null && !content.isBlank()) {
+        if ( content != null && !content.isBlank() && content.length() <= maxContentLength) {
             this.content = content;
         }
         else {
@@ -139,8 +153,6 @@ public class Comment {
 
     // GETTERS
 
-    // Can be null when the Comment has not been persisted yet
-    // Wrap in Optional ? Or will that be confusing ?
     /**
      * Get the id of the Comment <br>
      * Can be null if the Comment has not yet been persisted
@@ -150,8 +162,6 @@ public class Comment {
         return this.id;
     }
 
-    // Can be null when the Comment has not been persisted yet
-    // Wrap in Optional ? Or will that be confusing ?
     /**
      * Get the creationDate of the Comment <br>
      * Can be null if the Comment has not yet been persisted
@@ -166,7 +176,6 @@ public class Comment {
      * Cannot be null or blank
      * @return {@link Comment#content} of the Comment
      */
-    @NotNull
     public String getContent() {
         return this.content;
     }
@@ -177,7 +186,6 @@ public class Comment {
      * defined in {@link CommentState}
      * @return {@link Comment#state} of the Comment
      */
-    @NotNull
     public CommentState getState() {
         return this.state;
     }
@@ -198,7 +206,6 @@ public class Comment {
      * @see Story
      * @return {@link Comment#storyID} of the Comment
      */
-    @NotNull
     public Story getStory() {
         return this.storyID;
     }
