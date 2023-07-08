@@ -274,12 +274,27 @@ public class Story {
      * @param newContent New content of the Story
      * @throws RuntimeException If new content does not conform to the constraints mentioned
      */
-    public void SetContent(String newContent) {
+    public void setContent(String newContent) {
         if (newContent != null && !newContent.isBlank() && newContent.length() <= maximumContentLength) {
             this.content = newContent;
         }
         else {
             throw new RuntimeException("New content is not valid");
+        }
+    }
+
+    /**
+     * Updates the Story's rejection reason <br>
+     * New rejection reason cannot be empty, null or be greater than {@link #maximumRejectionReasonLength}
+     * @param newReason New rejection reason for the Story
+     * @throws RuntimeException If new rejectionReason does not conform to the constraints mentioned
+     */
+    public void setRejectionReason(String newReason) {
+        if (newReason != null && !newReason.isBlank() && newReason.length() <= maximumContentLength) {
+            this.rejectionReason = newReason;
+        }
+        else {
+            throw new RuntimeException("The rejection reason is not valid");
         }
     }
 
