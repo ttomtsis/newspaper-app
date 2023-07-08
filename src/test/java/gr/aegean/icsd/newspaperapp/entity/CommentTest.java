@@ -217,9 +217,32 @@ public class CommentTest {
         entityManager.persist(testComment);
         entityManager.flush();
 
+        /*
+         * Since the same Entity Manager and Persistence contexts are used,
+         * the Story residing in the Persistence Context needs to be refreshed by the manager
+         * in order to correctly associate the new Comment with the Story in the persistence context
+         */
+        entityManager.refresh(story);
+
         long testCommentID = testComment.getId();
         long storyID = story.getId();
 
+        /*
+         * Since the same Entity Manager is used, the Persistence Context
+         * needs to be refreshed by the manager
+         * in order to reflect the changes made by the previous flush.
+         * To achieve this the context is cleared to remove all entities
+         * and then forced to add them anew using entityManager.find()
+         *
+         * This action simulates the following behaviour:
+         *
+         * 1) User A creates a new Transaction, associated with a new persistent
+         * context and Entity Manager, to delete a Story in the database
+         * 2) User A commits the Transaction and the persistence context is flushed,
+         * deleting the Story Entity and all associated Comments from the database
+         * 3) User B creates a new Transaction, searching for the Comment that
+         * was previously deleted.
+         */
         entityManager.remove(story);
         entityManager.flush();
         entityManager.clear();
@@ -240,12 +263,40 @@ public class CommentTest {
         entityManager.persist(testComment);
         entityManager.flush();
 
-        long testCommentID = testComment.getId();
+        /*
+         * NOTE: When referring to 'Author' below, it should be translated as the User Entity.
+         * No Author entity exists.
+         *
+         * Since the same Entity Manager and Persistence contexts are used,
+         * the Author residing in the Persistence Context needs to be refreshed by the manager
+         * in order to correctly associate the new Comment with the Author in the persistence context
+         */
+        entityManager.refresh(author);
 
+        long testCommentID = testComment.getId();
+        long authorID = author.getId();
+
+        /*
+         * Since the same Entity Manager is used, the Persistence Context
+         * needs to be refreshed by the manager
+         * in order to reflect the changes made by the previous flush.
+         * To achieve this the context is cleared to remove all entities
+         * and then forced to add them anew using entityManager.find()
+         *
+         * This action simulates the following behaviour:
+         *
+         * 1) User A creates a new Transaction, associated with a new persistent
+         * context and Entity Manager, to delete an Author in the database
+         * 2) User A commits the Transaction and the persistence context is flushed,
+         * deleting the Author Entity and all associated Comments from the database
+         * 3) User B creates a new Transaction, searching for the Comment that
+         * was previously deleted.
+         */
         entityManager.remove(author);
         entityManager.flush();
         entityManager.clear();
 
+        assertNull(entityManager.find(User.class, authorID));
         assertNull(entityManager.find(Comment.class, testCommentID));
     }
 
@@ -260,17 +311,32 @@ public class CommentTest {
         Comment testComment = new Comment(story, "test");
         entityManager.persist(testComment);
         entityManager.flush();
-        entityManager.clear();
 
-        story.addComment(testComment);
-        entityManager.flush();
-        entityManager.clear();
+        /*
+        * Since the same Entity Manager is used, the Story residing in the
+        * Persistence Context needs to be refreshed by the manager
+        * in order to reflect the changes made by the previous flush.
+        *
+        * This action simulates the following behaviour:
+        *
+        * 1) User A creates a new Transaction, associated with a new persistent
+        * context and Entity Manager, to save a Comment in the database
+        * 2) User A commits the Transaction and the persistence context is flushed,
+        * saving the new Comment Entity in the database
+        * 3) User B creates a new Transaction, fetching all the Comments
+        * associated with a Story, including the Comment User A created.
+        */
+        entityManager.refresh(story);
 
         assertTrue(story.getComments().contains(testComment));
 
+        /*
+        * The Comment's content field is updated, since the Story and the Comment
+        * now share an association in the persistence context, as well as in the database,
+        * it is not necessary to refresh the Story again.
+        */
         testComment.setContent("new content");
         entityManager.flush();
-        entityManager.clear();
 
         assertEquals("new content",testComment.getContent());
         assertEquals("new content",story.getComments().stream().toList().get(0).getContent());
@@ -279,24 +345,6 @@ public class CommentTest {
 
     /**
      * Test case - EC10 <br>
-     * Check if upon creating a new Comment, it is automatically added to the
-     * associated Story's Comment set
-     */
-    @Test
-    public void testAutomaticCommentInsert() {
-
-        Comment testComment = new Comment(story, "test");
-        entityManager.persist(testComment);
-        entityManager.flush();
-        entityManager.clear();
-
-        assertTrue(story.getComments().contains(testComment));
-
-    }
-
-
-    /**
-     * Test case - EC11 <br>
      * Check if setContent and setState function as expected with valid parameters
      */
     @Test
