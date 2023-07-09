@@ -57,6 +57,10 @@ public class Topic {
     @JoinColumn(name = "authorID", nullable = false, updatable = false)
     private User authorID;
 
+    @ManyToMany(mappedBy = "topicsList", cascade = CascadeType.REFRESH,
+            targetEntity = Story.class)
+    private Set<Story> storiesList;
+
     @OneToMany(mappedBy = "parentTopicID", targetEntity = Topic.class,
             cascade = {CascadeType.REFRESH})
     private Set<Topic> topicsList = new HashSet<Topic>();
@@ -90,11 +94,32 @@ public class Topic {
         this.creationDate = Date.from(LocalDateTime.now().toInstant(ZoneOffset.UTC));
     }
 
-    public void setId(Long id) {
-        this.id = id;
-    }
-
     public Long getId() {
         return id;
+    }
+
+    public String getName() {
+        return this.name;
+    }
+
+    public Set<Story> getStoriesList() {
+        return this.storiesList;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public void addStory(Story newStory) {
+        if (newStory != null) {
+            storiesList.add(newStory);
+        }
+        else {
+            throw new NullPointerException("New Story cannot be null");
+        }
+    }
+
+    public void removeStory(Story story) {
+        storiesList.remove(story);
     }
 }
