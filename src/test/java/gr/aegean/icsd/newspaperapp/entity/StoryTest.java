@@ -85,6 +85,10 @@ public class StoryTest {
     @Test
     public void testPersistenceOfViolatedConstraints() {
 
+        // No parameters given
+        assertThrows(ConstraintViolationException.class, () ->
+                entityManager.persist(new Story()));
+
         // Content tests
         String invalidSizeString = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. " +
                 "Nam euismod, tortor nec pharetra ultricies, ante erat imperdiet velit, nec" +
@@ -149,6 +153,14 @@ public class StoryTest {
         assertThrows(IllegalStateException.class, () ->
                 entityManager.persist(new Story("testName",author,"validContent", invalidTopicList)));
 
+        assertThrows(RuntimeException.class, () ->
+                entityManager.persist(new Story("testName",author,"validContent", new HashSet<>())));
+
+        HashSet<Topic> nullTopicList = new HashSet<>();
+        nullTopicList.add(null);
+        assertThrows(RuntimeException.class, () ->
+                entityManager.persist(new Story("testName",author,"validContent", nullTopicList)));
+
         assertThrows(IllegalStateException.class, () ->
                 entityManager.persist(new Story("testName",author,"validContent", new Topic("testTopic", author))));
     }
@@ -202,91 +214,6 @@ public class StoryTest {
 
     /**
      * Test Case - ES4 <br>
-     * Check if the Story's foreign key constraints and cascade behaviour are valid
-     */
-    @Test
-    public void testForeignKeyConstraints() {
-
-        // Update Story, update Topic
-        Story testStory = new Story("testName", author, "validContent", topic);
-        entityManager.persist(testStory);
-        entityManager.flush();
-
-        testStory.setName("New Valid Name");
-        entityManager.flush();
-        entityManager.refresh(topic);
-
-        assertEquals("New Valid Name", topic.getStories().stream().toList().get(0).getName());
-
-        // Update Topic, update Story
-        topic.setName("New Valid Topic Name");
-        entityManager.flush();
-        entityManager.refresh(testStory);
-
-        assertEquals("New Valid Topic Name", testStory.getTopics().stream().toList().get(0).getName());
-
-        // Add same Topic twice in the same Story
-        testStory.addTopic(topic);
-        entityManager.flush();
-        entityManager.refresh(topic);
-        entityManager.refresh(testStory);
-
-        assertEquals(1, testStory.getTopics().size());
-        assertEquals(1, topic.getStories().size());
-
-        // Add same Story twice in the same Topic
-        topic.addStory(testStory);
-        entityManager.flush();
-        entityManager.refresh(testStory);
-        entityManager.refresh(topic);
-
-        assertEquals(1, testStory.getTopics().size());
-        assertEquals(1, topic.getStories().size());
-
-        // 2 Stories in 1 Topic
-        Story testStory2 = new Story("testName", author, "validContent", topic);
-        entityManager.persist(testStory2);
-        entityManager.flush();
-
-        topic.addStory(testStory2);
-        entityManager.flush();
-
-        assertEquals(2, topic.getStories().size());
-
-        // 2 Topics in 1 Story
-        Topic topic2 = new Topic("topic2",author);
-        entityManager.persist(topic2);
-        entityManager.flush();
-
-        testStory2.addTopic(topic2);
-        entityManager.flush();
-
-        assertEquals(2, testStory2.getTopics().size());
-
-        // Delete Topic, Story persist
-        long testStory2ID = testStory2.getId();
-
-        testStory2.removeTopic(topic2);
-        entityManager.remove(topic2);
-        entityManager.flush();
-
-        assertNotNull(entityManager.find(Story.class, testStory2ID));
-        assertEquals(1, testStory2.getTopics().size());
-
-        // Delete Story, Topic persist
-        long topicID = topic.getId();
-
-        topic.removeStory(testStory);
-        entityManager.remove(testStory);
-        entityManager.flush();
-
-        assertNotNull(entityManager.find(Topic.class, topicID));
-        assertEquals(1, topic.getStories().size());
-
-    }
-
-    /**
-     * Test Case - ES5 <br>
      * Check if the Story's addTopic method functions as expected
      */
     @Test
@@ -324,10 +251,12 @@ public class StoryTest {
         newTestStory.addTopic(topic);
         entityManager.flush();
         assertEquals(1, newTestStory.getTopics().size());
+        assertEquals(1, topic.getStories().size());
+
     }
 
     /**
-     * Test Case - ES6 <br>
+     * Test Case - ES5 <br>
      * Check if the Story's removeTopic method functions as expected
      */
     @Test
@@ -339,11 +268,13 @@ public class StoryTest {
         assertEquals(1, testStory.getTopics().size());
         testStory.removeTopic(null);
         entityManager.flush();
+        assertEquals(1, testStory.getTopics().size());
 
         // non-existing
         assertEquals(1, testStory.getTopics().size());
         testStory.removeTopic(new Topic("testTopic",author));
         entityManager.flush();
+        assertEquals(1, testStory.getTopics().size());
 
         // valid
         assertEquals(1, testStory.getTopics().size());
@@ -351,5 +282,88 @@ public class StoryTest {
         entityManager.flush();
         assertEquals(0, testStory.getTopics().size());
     }
+
+    /**
+     * Test Case - ES6 <br>
+     * Check if the Story's foreign key constraints and cascade behaviour are valid
+     */
+    @Test
+    public void testForeignKeyConstraints() {
+
+        // Update Story, update Topic
+        Story testStory = new Story("testName", author, "validContent", topic);
+        entityManager.persist(testStory);
+        entityManager.flush();
+
+        testStory.setName("New Valid Name");
+        entityManager.flush();
+        entityManager.refresh(topic);
+
+        assertEquals("New Valid Name", topic.getStories().stream().toList().get(0).getName());
+
+        // Update Topic, update Story
+        topic.setName("New Valid Topic Name");
+        entityManager.flush();
+        entityManager.refresh(testStory);
+
+        assertEquals("New Valid Topic Name", testStory.getTopics().stream().toList().get(0).getName());
+
+        // Add same Story twice in the same Topic
+        topic.addStory(testStory);
+        entityManager.flush();
+        entityManager.refresh(testStory);
+        entityManager.refresh(topic);
+
+        assertEquals(1, testStory.getTopics().size());
+        assertEquals(1, topic.getStories().size());
+
+        // 2 Stories in 1 Topic
+        assertEquals(1, topic.getStories().size());
+
+        Story testStory2 = new Story("testName", author, "validContent", topic);
+        entityManager.persist(testStory2);
+        entityManager.flush();
+
+        topic.addStory(testStory2);
+        entityManager.flush();
+
+        assertEquals(2, topic.getStories().size());
+
+        // 2 Topics in 1 Story
+        assertEquals(1, topic.getStories().size());
+
+        Topic topic2 = new Topic("topic2",author);
+        entityManager.persist(topic2);
+        entityManager.flush();
+
+        testStory2.addTopic(topic2);
+        entityManager.flush();
+
+        assertEquals(2, testStory2.getTopics().size());
+
+        // Delete Topic, Story persist
+        long testStory2ID = testStory2.getId();
+
+        testStory2.removeTopic(topic2);
+        entityManager.remove(topic2);
+        entityManager.flush();
+
+        assertNotNull(entityManager.find(Story.class, testStory2ID));
+        assertEquals(1, testStory2.getTopics().size());
+
+        // Delete Story, Topic persist
+        long topicID = topic.getId();
+
+        topic.removeStory(testStory);
+        entityManager.remove(testStory);
+        entityManager.flush();
+
+        assertNotNull(entityManager.find(Topic.class, topicID));
+        assertEquals(1, topic.getStories().size());
+
+    }
+
+
+
 
 }
