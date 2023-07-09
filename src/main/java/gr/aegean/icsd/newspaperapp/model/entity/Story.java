@@ -112,12 +112,11 @@ public class Story {
     private User authorID;
 
     /**
-     * Author of the Story. <br>
-     * Many Stories can have the same Author <br>
-     * Only one Author per Story is allowed
+     * Topics that this Story belongs to. <br>
+     * A Story can belong in many Topics at once <br>
+     * Many Topics can be associated with the same Story <br>
      */
     @ManyToMany(cascade = CascadeType.REFRESH, targetEntity = Topic.class)
-    @JoinColumn(name = "topicID")
     private Set<Topic> topicsList = new HashSet<Topic>();
 
     /**
@@ -127,6 +126,7 @@ public class Story {
      * @param storyAuthor Author of the Story, required
      * @param storyContent Content of the Story, required
      * @see #Story(String, User, String, Set)
+     * @see #Story(String, User, String, Topic) 
      */
     public Story(String storyName, User storyAuthor, String storyContent) {
         this.name = storyName;
@@ -144,6 +144,7 @@ public class Story {
      * @param storyContent Content of the Story, required
      * @param storyTopics A list of Topics this Story belongs to, optional
      * @see #Story(String, User, String)
+     * @see #Story(String, User, String, Topic) 
      * @throws RuntimeException If the list of Topics is empty or null
      */
     public Story(String storyName, User storyAuthor, String storyContent, Set<Topic> storyTopics) {
@@ -160,6 +161,33 @@ public class Story {
 
     }
 
+    /**
+     * Story constructor, used to create Story Entities that will be persisted in the
+     * database <br>
+     * This constructor is used when a single Topic, that this Story belongs to, is also specified
+     * @param storyName Name of the Story, required
+     * @param storyAuthor Author of the Story, required
+     * @param storyContent Content of the Story, required
+     * @param storyTopic The Topic this Story belongs to, optional
+     * @see #Story(String, User, String)
+     * @see #Story(String, User, String, Set)  
+     * @throws RuntimeException If the list of Topics is empty or null
+     */
+    public Story(String storyName, User storyAuthor, String storyContent, Topic storyTopic) {
+
+        if (storyTopic != null) {
+            this.name = storyName;
+            this.authorID = storyAuthor;
+            this.content = storyContent;
+            topicsList.add(storyTopic);
+            this.state = StoryState.CREATED;
+        }
+        else {
+            throw new RuntimeException("Topic cannot be null");
+        }
+
+    }
+    
     public Story(){}
 
     /**
@@ -296,6 +324,33 @@ public class Story {
         else {
             throw new RuntimeException("The rejection reason is not valid");
         }
+    }
+
+    // UTILITY
+
+    /**
+     * Adds a Topic to the Topic list <br>
+     * @param newTopic Topic to be added
+     * @throws NullPointerException If newTopic is null
+     */
+    public void addTopic(Topic newTopic) {
+        if (newTopic != null) {
+            topicsList.add(newTopic);
+        }
+        else {
+            throw new NullPointerException("New Topic cannot be null");
+        }
+    }
+
+    /**
+     * Remove a Topic from the Topic list <br>
+     * Required to use before deleting an association <br>
+     * Null and non-existing Topics, are safely ignored
+     * without throwing an exception
+     * @param topic Topic to be removed
+     */
+    public void removeTopic(Topic topic) {
+        this.topicsList.remove(topic);
     }
 
 }
