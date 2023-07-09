@@ -16,6 +16,7 @@ import java.util.Set;
  * Entity representing the Story resource
  * @see #Story(String, User, String)
  * @see #Story(String, User, String, Set)
+ * @see #Story(String, User, String, Topic) 
  */
 @Entity
 @Table(name = "story")
