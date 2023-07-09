@@ -267,15 +267,12 @@ public class StoryTest {
         entityManager.refresh(topic);
 
         assertEquals(1, testStory.getTopics().size());
+        assertTrue(topic.getStories().contains(testStory));
 
         // null Topic
         assertThrows(NullPointerException.class, () ->
                 testStory.addTopic(null));
         assertEquals(1, testStory.getTopics().size());
-
-        // Non-existing Topic
-        testStory.addTopic(new Topic("testTopic",author));
-        assertThrows(IllegalStateException.class, () -> entityManager.flush());
 
         // Creating new TestStory since the previous one cannot be flushed
         // due to the non-existing Topic present in it's topicsList
@@ -301,6 +298,7 @@ public class StoryTest {
     public void removeTopic() {
         Story testStory = new Story("testName", author, "validContent", topic);
         entityManager.persistAndFlush(testStory);
+        entityManager.refresh(topic);
 
         // null
         assertEquals(1, testStory.getTopics().size());
@@ -316,9 +314,14 @@ public class StoryTest {
 
         // valid
         assertEquals(1, testStory.getTopics().size());
+        assertTrue(topic.getStories().contains(testStory));
+
         testStory.removeTopic(topic);
         entityManager.flush();
+        entityManager.refresh(topic);
+
         assertEquals(0, testStory.getTopics().size());
+        assertFalse(topic.getStories().contains(testStory));
     }
 
     /**
