@@ -83,7 +83,7 @@ public class StoryTest {
      * Check if it is possible to persist a story with invalid parameters
      */
     @Test
-    public void testConstraintsViolationPersistence() {
+    public void testPersistenceOfViolatedConstraints() {
 
         // Content tests
         String invalidSizeString = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. " +
@@ -121,6 +121,14 @@ public class StoryTest {
         assertThrows(ConstraintViolationException.class, () ->
                 entityManager.persist(new Story("", author,"validContent")));
 
+            // Duplicate name test
+        Story test1 = new Story("sameName",author,"validContent");
+        Story test2 = new Story("sameName",author,"validContent");
+        entityManager.persist(test1);
+
+        assertThrows(org.hibernate.exception.ConstraintViolationException.class, () ->
+                entityManager.persist(test2));
+
         // Author tests
         assertThrows(org.hibernate.exception.ConstraintViolationException.class, () ->
                 entityManager.persist(new Story("testName",null,"validContent")));
@@ -130,14 +138,19 @@ public class StoryTest {
 
         // Topic tests
         assertThrows(RuntimeException.class, () ->
-                entityManager.persist(new Story("testName",author,"validContent",null)));
+                entityManager.persist(new Story("testName",author,"validContent", (Set<Topic>) null)));
 
+        assertThrows(RuntimeException.class, () ->
+                entityManager.persist(new Story("testName",author,"validContent", (Topic) null)));
 
         Set<Topic> invalidTopicList = new HashSet<>();
         invalidTopicList.add(new Topic("invalidTopic", author));
 
         assertThrows(IllegalStateException.class, () ->
                 entityManager.persist(new Story("testName",author,"validContent", invalidTopicList)));
+
+        assertThrows(IllegalStateException.class, () ->
+                entityManager.persist(new Story("testName",author,"validContent", new Topic("testTopic", author))));
     }
 
     /**
@@ -187,5 +200,156 @@ public class StoryTest {
         assertEquals("New Rejection Reason", testStory.getRejectionReason());
     }
 
+    /**
+     * Test Case - ES4 <br>
+     * Check if the Story's foreign key constraints and cascade behaviour are valid
+     */
+    @Test
+    public void testForeignKeyConstraints() {
+
+        // Update Story, update Topic
+        Story testStory = new Story("testName", author, "validContent", topic);
+        entityManager.persist(testStory);
+        entityManager.flush();
+
+        testStory.setName("New Valid Name");
+        entityManager.flush();
+        entityManager.refresh(topic);
+
+        assertEquals("New Valid Name", topic.getStoriesList().stream().toList().get(0).getName());
+
+        // Update Topic, update Story
+        topic.setName("New Valid Topic Name");
+        entityManager.flush();
+        entityManager.refresh(testStory);
+
+        assertEquals("New Valid Topic Name", testStory.getTopics().stream().toList().get(0).getName());
+
+        // Add same Topic twice in the same Story
+        testStory.addTopic(topic);
+        entityManager.flush();
+        entityManager.refresh(topic);
+        entityManager.refresh(testStory);
+
+        assertEquals(1, testStory.getTopics().size());
+        assertEquals(1, topic.getStoriesList().size());
+
+        // Add same Story twice in the same Topic
+        topic.addStory(testStory);
+        entityManager.flush();
+        entityManager.refresh(testStory);
+        entityManager.refresh(topic);
+
+        assertEquals(1, testStory.getTopics().size());
+        assertEquals(1, topic.getStoriesList().size());
+
+        // 2 Stories in 1 Topic
+        Story testStory2 = new Story("testName", author, "validContent", topic);
+        entityManager.persist(testStory2);
+        entityManager.flush();
+
+        topic.addStory(testStory2);
+        entityManager.flush();
+
+        assertEquals(2, topic.getStoriesList().size());
+
+        // 2 Topics in 1 Story
+        Topic topic2 = new Topic("topic2",author);
+        entityManager.persist(topic2);
+        entityManager.flush();
+
+        testStory2.addTopic(topic2);
+        entityManager.flush();
+
+        assertEquals(2, testStory2.getTopics().size());
+
+        // Delete Topic, Story persist
+        long testStory2ID = testStory2.getId();
+
+        testStory2.removeTopic(topic2);
+        entityManager.remove(topic2);
+        entityManager.flush();
+
+        assertNotNull(entityManager.find(Story.class, testStory2ID));
+        assertEquals(1, testStory2.getTopics().size());
+
+        // Delete Story, Topic persist
+        long topicID = topic.getId();
+
+        topic.removeStory(testStory);
+        entityManager.remove(testStory);
+        entityManager.flush();
+
+        assertNotNull(entityManager.find(Topic.class, topicID));
+        assertEquals(1, topic.getStoriesList().size());
+
+    }
+
+    /**
+     * Test Case - ES5 <br>
+     * Check if the Story's addTopic method functions as expected
+     */
+    @Test
+    public void testAddTopic() {
+        Story testStory = new Story("testName", author, "validContent");
+        entityManager.persistAndFlush(testStory);
+
+        // Valid functionality
+        assertEquals(0, testStory.getTopics().size());
+
+        testStory.addTopic(topic);
+        entityManager.flush();
+        entityManager.refresh(topic);
+
+        assertEquals(1, testStory.getTopics().size());
+
+        // null Topic
+        assertThrows(NullPointerException.class, () ->
+                testStory.addTopic(null));
+        assertEquals(1, testStory.getTopics().size());
+
+        // Non-existing Topic
+        testStory.addTopic(new Topic("testTopic",author));
+        assertThrows(IllegalStateException.class, () -> entityManager.flush());
+
+        // Creating new TestStory since the previous one cannot be flushed
+        // due to the non-existing Topic present in it's topicsList
+        Story newTestStory = new Story("newTestName", author, "validContent", topic);
+
+        // Cleaning the persistence context so the previous story is no longer managed
+        entityManager.clear();
+        entityManager.persistAndFlush(newTestStory);
+
+        // Duplicate Topic
+        newTestStory.addTopic(topic);
+        entityManager.flush();
+        assertEquals(1, newTestStory.getTopics().size());
+    }
+
+    /**
+     * Test Case - ES6 <br>
+     * Check if the Story's removeTopic method functions as expected
+     */
+    @Test
+    public void removeTopic() {
+        Story testStory = new Story("testName", author, "validContent", topic);
+        entityManager.persistAndFlush(testStory);
+
+        // null
+        assertEquals(1, testStory.getTopics().size());
+        testStory.removeTopic(null);
+        entityManager.flush();
+
+        // non-existing
+        assertEquals(1, testStory.getTopics().size());
+        testStory.removeTopic(new Topic("testTopic",author));
+        entityManager.flush();
+
+        // valid
+        assertEquals(1, testStory.getTopics().size());
+        testStory.removeTopic(topic);
+        entityManager.flush();
+        assertEquals(0, testStory.getTopics().size());
+    }
 
 }
