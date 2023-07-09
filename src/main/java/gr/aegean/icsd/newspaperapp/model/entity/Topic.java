@@ -102,13 +102,15 @@ public class Topic {
         return this.name;
     }
 
-    public Set<Story> getStoriesList() {
+    public Set<Story> getStories() {
         return this.storiesList;
     }
 
     public void setName(String name) {
         this.name = name;
     }
+
+    // UTILITY
 
     public void addStory(Story newStory) {
         if (newStory != null) {
@@ -122,4 +124,17 @@ public class Topic {
     public void removeStory(Story story) {
         storiesList.remove(story);
     }
+
+    public void addChild(Topic childTopic) {
+        this.topicsList.add(childTopic);
+    }
+
+    public void removeChild(Topic childTopic) {
+        this.topicsList.remove(childTopic);
+    }
+
+    public void setParent(Topic parentTopic) {
+        this.parentTopicID = parentTopic;
+    }
+
 }
