@@ -330,7 +330,7 @@ public class StoryTest {
         assertEquals(2, topic.getStories().size());
 
         // 2 Topics in 1 Story
-        assertEquals(1, topic.getStories().size());
+        assertEquals(1, testStory2.getTopics().size());
 
         Topic topic2 = new Topic("topic2",author);
         entityManager.persist(topic2);
