@@ -216,7 +216,7 @@ public class StoryTest {
         entityManager.flush();
         entityManager.refresh(topic);
 
-        assertEquals("New Valid Name", topic.getStoriesList().stream().toList().get(0).getName());
+        assertEquals("New Valid Name", topic.getStories().stream().toList().get(0).getName());
 
         // Update Topic, update Story
         topic.setName("New Valid Topic Name");
@@ -232,7 +232,7 @@ public class StoryTest {
         entityManager.refresh(testStory);
 
         assertEquals(1, testStory.getTopics().size());
-        assertEquals(1, topic.getStoriesList().size());
+        assertEquals(1, topic.getStories().size());
 
         // Add same Story twice in the same Topic
         topic.addStory(testStory);
@@ -241,7 +241,7 @@ public class StoryTest {
         entityManager.refresh(topic);
 
         assertEquals(1, testStory.getTopics().size());
-        assertEquals(1, topic.getStoriesList().size());
+        assertEquals(1, topic.getStories().size());
 
         // 2 Stories in 1 Topic
         Story testStory2 = new Story("testName", author, "validContent", topic);
@@ -251,7 +251,7 @@ public class StoryTest {
         topic.addStory(testStory2);
         entityManager.flush();
 
-        assertEquals(2, topic.getStoriesList().size());
+        assertEquals(2, topic.getStories().size());
 
         // 2 Topics in 1 Story
         Topic topic2 = new Topic("topic2",author);
@@ -281,7 +281,7 @@ public class StoryTest {
         entityManager.flush();
 
         assertNotNull(entityManager.find(Topic.class, topicID));
-        assertEquals(1, topic.getStoriesList().size());
+        assertEquals(1, topic.getStories().size());
 
     }
 
