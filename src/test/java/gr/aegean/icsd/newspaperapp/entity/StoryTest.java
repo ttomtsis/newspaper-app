@@ -64,6 +64,7 @@ public class StoryTest {
     @Test
     public void testValidStoryCreationAndPersistence() {
 
+        // Test constructor Str, User, Str
         Story testStory = new Story("testStory", author, "validContent");
 
         assertNull(testStory.getId());
@@ -75,7 +76,44 @@ public class StoryTest {
         assertNotNull(testStory.getId());
         assertNotNull(testStory.getCreationDate());
         assertEquals(StoryState.CREATED, testStory.getState());
+        assertEquals(0, testStory.getTopics().size());
         assertNotNull(entityManager.find(Story.class, testStory.getId()));
+
+        // Test constructor Str, User, Str, Set
+        Set<Topic> testTopicList = new HashSet<>();
+        testTopicList.add(topic);
+
+        Story testStory2 = new Story("testStory2", author, "validContent", testTopicList);
+
+        assertNull(testStory2.getId());
+        assertNull(testStory2.getCreationDate());
+
+        entityManager.persist(testStory2);
+        entityManager.flush();
+
+        assertNotNull(testStory2.getId());
+        assertNotNull(testStory2.getCreationDate());
+        assertEquals(StoryState.CREATED, testStory2.getState());
+        assertEquals(1, testStory2.getTopics().size());
+        assertNotNull(entityManager.find(Story.class, testStory2.getId()));
+
+        // Test constructor Str, User, Str, Topic
+        Topic newTopic = new Topic("newTopicName",author);
+        entityManager.persistAndFlush(newTopic);
+
+        Story testStory3 = new Story("testStory3", author, "validContent", newTopic);
+
+        assertNull(testStory3.getId());
+        assertNull(testStory3.getCreationDate());
+
+        entityManager.persist(testStory3);
+        entityManager.flush();
+
+        assertNotNull(testStory3.getId());
+        assertNotNull(testStory3.getCreationDate());
+        assertEquals(StoryState.CREATED, testStory3.getState());
+        assertEquals(1, testStory3.getTopics().size());
+        assertNotNull(entityManager.find(Story.class, testStory3.getId()));
     }
 
     /**
