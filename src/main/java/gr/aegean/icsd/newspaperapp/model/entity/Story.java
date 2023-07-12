@@ -10,6 +10,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -101,7 +102,7 @@ public class Story {
      */
     @OneToMany(mappedBy = "storyID", targetEntity = Comment.class,
             cascade = {CascadeType.REFRESH, CascadeType.REMOVE}, orphanRemoval = true)
-    private Set<Comment> commentsList = new HashSet<Comment>();
+    private final Set<Comment> commentsList = new HashSet<>();
 
     /**
      * Author of the Story. <br>
@@ -118,7 +119,7 @@ public class Story {
      * Many Topics can be associated with the same Story <br>
      */
     @ManyToMany(cascade = CascadeType.REFRESH, targetEntity = Topic.class)
-    private Set<Topic> topicsList = new HashSet<Topic>();
+    private final Set<Topic> topicsList = new HashSet<>();
 
     /**
      * Story constructor, used to create Story Entities that will be persisted in the
@@ -277,7 +278,7 @@ public class Story {
      *
      * @return {@link Story#authorID} of the Story
      */
-    public User getAuthorID() {
+    public User getAuthor() {
         return this.authorID;
     }
 
@@ -383,4 +384,37 @@ public class Story {
         this.topicsList.remove(topic);
     }
 
+    /**
+     * Create a Hash of an instantiated Topic
+     *
+     * @return A hash of the fields {@link #id}, {@link #authorID},
+     * {@link #creationDate}, {@link #state}
+     */
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, authorID, creationDate, state);
+    }
+
+    /**
+     * Check if this Topic and the specified object are equal <br><br>
+     *
+     * Two Topics are equal if their id's, authors, creation dates and states
+     * are equal
+     *
+     * @param obj The specified object to be compared with the Topic
+     * @return True or False, depending on the result of the comparison
+     */
+    @Override
+    public boolean equals(Object obj) {
+
+        if (obj instanceof Story newStory) {
+            return Objects.equals(this.id, newStory.getId())
+                    && Objects.equals(this.authorID, newStory.getAuthor())
+                    && Objects.equals(this.creationDate, newStory.getCreationDate())
+                    && Objects.equals(this.state, newStory.getState());
+        }
+
+        return false;
+
+    }
 }
