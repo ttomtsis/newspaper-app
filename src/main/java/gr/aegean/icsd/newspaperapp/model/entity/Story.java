@@ -123,9 +123,11 @@ public class Story {
     /**
      * Story constructor, used to create Story Entities that will be persisted in the
      * database
+     *
      * @param storyName Name of the Story, required
      * @param storyAuthor Author of the Story, required
      * @param storyContent Content of the Story, required
+     *
      * @see #Story(String, User, String, Set)
      * @see #Story(String, User, String, Topic) 
      */
@@ -138,14 +140,18 @@ public class Story {
 
     /**
      * Story constructor, used to create Story Entities that will be persisted in the
-     * database <br>
+     * database <br><br>
+     *
      * This constructor is used when a list of Topics, that this Story belongs to, is also specified
+     *
      * @param storyName Name of the Story, required
      * @param storyAuthor Author of the Story, required
      * @param storyContent Content of the Story, required
      * @param storyTopics A list of Topics this Story belongs to, optional
+     *
      * @see #Story(String, User, String)
-     * @see #Story(String, User, String, Topic) 
+     * @see #Story(String, User, String, Topic)
+     *
      * @throws RuntimeException If the list of Topics is empty or null
      */
     public Story(String storyName, User storyAuthor, String storyContent, Set<Topic> storyTopics) {
@@ -164,14 +170,18 @@ public class Story {
 
     /**
      * Story constructor, used to create Story Entities that will be persisted in the
-     * database <br>
+     * database <br><br>
+     *
      * This constructor is used when a single Topic, that this Story belongs to, is also specified
+     *
      * @param storyName Name of the Story, required
      * @param storyAuthor Author of the Story, required
      * @param storyContent Content of the Story, required
      * @param storyTopic The Topic this Story belongs to, optional
+     *
      * @see #Story(String, User, String)
-     * @see #Story(String, User, String, Set)  
+     * @see #Story(String, User, String, Set)
+     *
      * @throws RuntimeException If the list of Topics is empty or null
      */
     public Story(String storyName, User storyAuthor, String storyContent, Topic storyTopic) {
@@ -205,6 +215,7 @@ public class Story {
     /**
      * Get the id of the Story <br>
      * Can be null if the Story has not yet been persisted
+     *
      * @return {@link Story#id} of the Story
      */
     public Long getId() {
@@ -214,6 +225,7 @@ public class Story {
     /**
      * Get the creationDate of the Story <br>
      * Can be null if the Story has not yet been persisted
+     *
      * @return {@link Story#creationDate} of the Story
      */
     public Date getCreationDate() {
@@ -223,6 +235,7 @@ public class Story {
     /**
      * Get the state of the Story <br>
      * Valid states are defined in {@link StoryState}
+     *
      * @return {@link Story#state} of the Story
      */
     public StoryState getState() {
@@ -231,6 +244,7 @@ public class Story {
 
     /**
      * Get the name of the Story <br>
+     *
      * @return {@link Story#name} of the Story
      * @see #maximumNameLength
      */
@@ -240,6 +254,7 @@ public class Story {
 
     /**
      * Get the content of the Story <br>
+     *
      * @return {@link Story#content} of the Story
      * @see #maximumContentLength
      */
@@ -249,6 +264,7 @@ public class Story {
 
     /**
      * Get the rejectionReason of the Story <br>
+     *
      * @return {@link Story#rejectionReason} of the Story
      * @see #maximumRejectionReasonLength
      */
@@ -258,6 +274,7 @@ public class Story {
 
     /**
      * Get the Author of the Story <br>
+     *
      * @return {@link Story#authorID} of the Story
      */
     public User getAuthorID() {
@@ -266,6 +283,7 @@ public class Story {
 
     /**
      * Get the Topics this Story belongs to <br>
+     *
      * @return {@link Story#topicsList} of the Story
      */
     public Set<Topic> getTopics() {
@@ -274,6 +292,7 @@ public class Story {
 
     /**
      * Get the Comments associated with this Story <br>
+     *
      * @return {@link Story#commentsList} of the Story
      */
     public Set<Comment> getComments() {
@@ -283,8 +302,10 @@ public class Story {
     // SETTERS
 
     /**
-     * Updates the Story's name <br>
+     * Updates the Story's name <br><br>
+     *
      * New name cannot be empty, null or be greater than {@link #maximumNameLength}
+     *
      * @param newName New name of the Story
      * @throws RuntimeException If new name does not conform to the constraints mentioned
      */
@@ -298,8 +319,10 @@ public class Story {
     }
 
     /**
-     * Updates the Story's content <br>
+     * Updates the Story's content <br><br>
+     *
      * New content cannot be empty, null or be greater than {@link #maximumContentLength}
+     *
      * @param newContent New content of the Story
      * @throws RuntimeException If new content does not conform to the constraints mentioned
      */
@@ -313,8 +336,10 @@ public class Story {
     }
 
     /**
-     * Updates the Story's rejection reason <br>
+     * Updates the Story's rejection reason <br><br>
+     *
      * New rejection reason cannot be empty, null or be greater than {@link #maximumRejectionReasonLength}
+     *
      * @param newReason New rejection reason for the Story
      * @throws RuntimeException If new rejectionReason does not conform to the constraints mentioned
      */
@@ -331,6 +356,7 @@ public class Story {
 
     /**
      * Adds a Topic to the Topic list <br>
+     *
      * @param newTopic Topic to be added
      * @throws NullPointerException If newTopic is null
      */
@@ -344,10 +370,13 @@ public class Story {
     }
 
     /**
-     * Remove a Topic from the Topic list <br>
+     * Remove a Topic from the Topic list <br><br>
+     *
      * Required to use before deleting an association <br>
+     *
      * Null and non-existing Topics, are safely ignored
      * without throwing an exception
+     *
      * @param topic Topic to be removed
      */
     public void removeTopic(Topic topic) {
