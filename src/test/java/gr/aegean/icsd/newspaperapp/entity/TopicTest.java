@@ -1,507 +1,854 @@
 package gr.aegean.icsd.newspaperapp.entity;
 
+import gr.aegean.icsd.newspaperapp.model.entity.Comment;
 import gr.aegean.icsd.newspaperapp.model.entity.Story;
 import gr.aegean.icsd.newspaperapp.model.entity.Topic;
 import gr.aegean.icsd.newspaperapp.model.entity.User;
 import gr.aegean.icsd.newspaperapp.util.enums.TopicState;
 import gr.aegean.icsd.newspaperapp.util.enums.UserType;
 import jakarta.validation.ConstraintViolationException;
-import org.hibernate.exception.DataException;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.NullAndEmptySource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
-import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Collections;
+import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 @ExtendWith(SpringExtension.class)
 @DataJpaTest
-@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
+@Transactional
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
-public class TopicTest {
+@DisplayName("Topic Entity tests")
+@Tag("Entity")
+@Tag("Topic")
+public class TopicTest <Entity> {
 
+    //TODO: Add documentation
     @Autowired
     private TestEntityManager entityManager;
 
-    private User author;
+    private static User mockAuthor;
 
-    private Topic parentTopic;
+    private static Topic mockTopic;
 
-    private final static Logger log = LoggerFactory.getLogger("### StoryTest ###");
+    private static Story mockStory;
 
-    public TopicTest() {
-        log.info("Initializing Topic Entity Tests...");
-    }
+    private final static Logger log = LoggerFactory.getLogger("### TopicTest ###");
+
+    public TopicTest() {}
 
     @BeforeEach
     protected void initialize() {
-        author = new User("testName", "testPassword", UserType.CURATOR);
-        parentTopic = new Topic("testParentTopic", author);
 
-        entityManager.persist(author);
-        entityManager.persist(parentTopic);
+        mockAuthor = new User("mockAuthor", "testPassword", UserType.CURATOR);
+        mockTopic = new Topic("mockTopic", mockAuthor);
+        mockStory = new Story("mockStory", mockAuthor, "testContent");
+
+        entityManager.persist(mockAuthor);
+        entityManager.persist(mockTopic);
+        entityManager.persist(mockStory);
         entityManager.flush();
-
-        log.info("Author and Parent Topic created with authorID: " + this.author.getId() + " and parentTopicID: " + this.parentTopic.getId());
-    }
-
-    /**
-     * Test Case - ET1 <br>
-     * Check for valid behaviour of the Topic so long as the provided parameters are valid
-     */
-    @Test
-    public void testValidCreationAndPersistence() {
-
-        // Test constructor Str, User
-        Topic testTopic = new Topic("testTopic", author);
-
-        assertNull(testTopic.getId());
-        assertNull(testTopic.getCreationDate());
-
-        entityManager.persistAndFlush(testTopic);
-
-        assertNotNull(testTopic.getId());
-        assertNotNull(testTopic.getCreationDate());
-        assertEquals(TopicState.SUBMITTED, testTopic.getState());
-        assertEquals(0, testTopic.getStories().size());
-        assertEquals(0, testTopic.getChildrenTopics().size());
-        assertNull(testTopic.getParentTopic());
-        assertNotNull(entityManager.find(Topic.class, testTopic.getId()));
-
-        // Test constructor Str, User, Topic
-        Topic testTopic2 = new Topic("testTopic2", author, parentTopic);
-
-        assertNull(testTopic2.getId());
-        assertNull(testTopic2.getCreationDate());
-
-        entityManager.persistAndFlush(testTopic2);
-
-        assertNotNull(testTopic2.getId());
-        assertNotNull(testTopic2.getCreationDate());
-        assertEquals(TopicState.SUBMITTED, testTopic2.getState());
-        assertEquals(0, testTopic2.getStories().size());
-        assertEquals(0, testTopic2.getChildrenTopics().size());
-        assertNotNull(testTopic2.getParentTopic());
-        assertNotNull(entityManager.find(Topic.class, testTopic2.getId()));
-    }
-
-
-    /**
-     * Test Case - ES2 <br>
-     * Check if it is possible to persist a Topic with invalid parameters
-     */
-    @Test
-    public void testPersistenceOfViolatedConstraints() {
-
-        // No parameters given
-        assertThrows(ConstraintViolationException.class, () ->
-                entityManager.persist(new Topic()));
-
-        String invalidSizeString = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. " +
-                "Nam euismod, tortor nec pharetra ultricies, ante erat imperdiet velit, nec" +
-                " laoreet enim lacus a velit. Nam elementum ullamcorper orci, ac porttitor velit" +
-                " commodo ut. Sed quis nisl elementum, bibendum est at, porta erat. In hac habitasse" +
-                " platea dictumst. Vivamus eget nibh id lacus mollis placerat. Nulla facilisi. Donec lacinia" +
-                " congue felis in faucibus. Nunc non tincidunt neque, eu ultrices arcu. Praesent vel" +
-                "congue felis in faucibus. Nunc non tincidunt neque, eu ultrices arcu. Praesent vel" +
-                "congue felis in faucibus. Nunc non tincidunt neque, eu ultrices arcu. Praesent vel" +
-                "congue felis in faucibus. Nunc non tincidunt neque, eu ultrices arcu. Praesent vel.";
-
-
-        //Name tests
-        assertThrows(ConstraintViolationException.class, () ->
-                entityManager.persist(new Topic(invalidSizeString, author)));
-
-        assertThrows(ConstraintViolationException.class, () ->
-                entityManager.persist(new Topic(null, author)));
-
-        assertThrows(ConstraintViolationException.class, () ->
-                entityManager.persist(new Topic("   ", author)));
-
-        assertThrows(ConstraintViolationException.class, () ->
-                entityManager.persist(new Topic("", author)));
-
-        // Duplicate name test
-        Topic test1 = new Topic("sameName",author);
-        Topic test2 = new Topic("sameName",author);
-        entityManager.persist(test1);
-
-        assertThrows(org.hibernate.exception.ConstraintViolationException.class, () ->
-                entityManager.persist(test2));
-
-        // Author tests
-        assertThrows(org.hibernate.exception.ConstraintViolationException.class, () ->
-                entityManager.persist(new Topic("testName",null)));
-
-        assertThrows(IllegalStateException.class, () ->
-                entityManager.persist(new Topic("testName",new User())));
-
-        // Topic tests
-        assertThrows(RuntimeException.class, () ->
-                entityManager.persist(new Topic("testName", author,null)));
-
-        assertThrows(IllegalStateException.class, () ->
-                entityManager.persist(new Topic("testName", author, new Topic("testTopic", author))));
-    }
-
-    /**
-     * Test Case - ES3 <br>
-     * Check if the Topic's setters function as intended
-     */
-    @Test
-    public void testSetters() {
-
-        Topic testTopic = new Topic("testName", author);
-        Topic testTopic2 = new Topic("Duplicate Name", author);
-
-        entityManager.persist(testTopic);
-        entityManager.persist(testTopic2);
-        entityManager.flush();
-
-        String invalidSizeString = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. " +
-                "Nam euismod, tortor nec pharetra ultricies, ante erat imperdiet velit, nec" +
-                " laoreet enim lacus a velit. Nam elementum ullamcorper orci, ac porttitor velit" +
-                " commodo ut. Sed quis nisl elementum, bibendum est at, porta erat. In hac habitasse" +
-                " platea dictumst. Vivamus eget nibh id lacus mollis placerat. Nulla facilisi. Donec lacinia" +
-                " congue felis in faucibus. Nunc non tincidunt neque, eu ultrices arcu. Praesent vel" +
-                "congue felis in faucibus. Nunc non tincidunt neque, eu ultrices arcu. Praesent vel" +
-                "congue felis in faucibus. Nunc non tincidunt neque, eu ultrices arcu. Praesent vel" +
-                "congue felis in faucibus. Nunc non tincidunt neque, eu ultrices arcu. Praesent vel.";
-
-
-        testTopic.setName("validName");
-        entityManager.flush();
-        assertEquals("validName", testTopic.getName());
-
-        assertThrows(ConstraintViolationException.class, () -> {
-            testTopic.setName(invalidSizeString);
-            entityManager.flush();
-        });
-
-        assertThrows(ConstraintViolationException.class, () -> {
-            testTopic.setName(null);
-            entityManager.flush();
-        });
-
-        assertThrows(ConstraintViolationException.class, () -> {
-            testTopic.setName("    ");
-            entityManager.flush();
-        });
-
-        assertThrows(ConstraintViolationException.class, () -> {
-            testTopic.setName("");
-            entityManager.flush();
-        });
-
-        assertThrows(DataException.class, () -> {
-            testTopic.setName("Duplicate Name");
-            entityManager.flush();
-        });
 
     }
 
-    /**
-     * Test Case - ES4 <br>
-     * Check if the Topic's add Story method functions as intended
-     */
-    @Test
-    public void testAddStory() {
-        Topic testTopic = new Topic("testName", author);
-        entityManager.persistAndFlush(testTopic);
+    Entity remapEntity(Object oldEntityVersion) {
 
-        // null story
-        assertEquals(0, testTopic.getStories().size());
-        assertThrows(NullPointerException.class, () -> {
-            testTopic.addStory(null);
-        });
-        assertEquals(0, testTopic.getStories().size());
-
-        // valid story
-        assertEquals(0, testTopic.getStories().size());
-
-        Story validStory = new Story("validStory",author,"validContent");
-        testTopic.addStory(validStory);
-        entityManager.flush();
         entityManager.clear();
 
+        if (oldEntityVersion instanceof Story oldStoryVersion) {
+            return (Entity) entityManager.find(Story.class, oldStoryVersion.getId());
+        }
+        else if (oldEntityVersion instanceof Topic oldTopicVersion) {
+            return (Entity) entityManager.find(Topic.class, oldTopicVersion.getId());
+        }
+        else if (oldEntityVersion instanceof Comment oldCommentVersion) {
+            return (Entity) entityManager.find(Comment.class, oldCommentVersion.getId());
+        }
+        else if (oldEntityVersion instanceof User oldUserVersion) {
+            return (Entity) entityManager.find(User.class, oldUserVersion.getId());
+        }
 
-        assertTrue(testTopic.getStories().contains(validStory));
-        // Check that association has not been created, since Topic is not the owning side
-        assertFalse(validStory.getTopics().contains(testTopic));
-
-        // duplicate story
-        assertEquals(1, testTopic.getStories().size());
-
-        testTopic.addStory(validStory);
-        entityManager.flush();
-
-        assertEquals(1, testTopic.getStories().size());
-    }
-
-    /**
-     * Test Case - ES5 <br>
-     * Check if the Topic's add Story method functions as intended
-     * when adding a Story that does not exist. <br>
-     * This is a separate test case due to a bug <br>
-     */
-    @Test
-    public void testAddNonExistingStory() {
-        Topic testTopic = new Topic("testName", author);
-        entityManager.persistAndFlush(testTopic);
-
-        long testTopicID = testTopic.getId();
-
-        // Create association with non-existing story
-        assertEquals(0, testTopic.getStories().size());
-
-        Story nonExistingStory = new Story("nonExisting", author, "content");
-        nonExistingStory.addTopic(testTopic);
-        testTopic.addStory(nonExistingStory);
-
-        entityManager.flush();
-        entityManager.clear();
-        testTopic = entityManager.find(Topic.class, testTopicID);
-
-        assertEquals(0, testTopic.getStories().size());
-    }
-
-    /**
-     * Test Case - ES6 <br>
-     * Check if the Topic's remove Story method functions as intended <br>
-     * Remove Story should ONLY remove the specified story from the Topic
-     * and should not be able to remove the entire association <br>
-     */
-    @Test
-    public void testRemoveStory() {
-        Topic testTopic = new Topic("testName", author);
-        Story validStory = new Story("validStory",author,"validContent");
-
-        entityManager.persist(testTopic);
-        entityManager.persist(validStory);
-        validStory.addTopic(testTopic);
-        entityManager.flush();
-        entityManager.refresh(testTopic);
-
-        // null story
-        assertTrue(testTopic.getStories().contains(validStory));
-        assertTrue(validStory.getTopics().contains(testTopic));
-
-        testTopic.removeStory(null);
-        entityManager.flush();
-
-        assertTrue(testTopic.getStories().contains(validStory));
-        assertTrue(validStory.getTopics().contains(testTopic));
-
-        // non-existing story
-        assertTrue(testTopic.getStories().contains(validStory));
-        assertTrue(validStory.getTopics().contains(testTopic));
-
-        testTopic.removeStory(new Story("non-existing",author,"validContent"));
-        entityManager.flush();
-
-        assertTrue(testTopic.getStories().contains(validStory));
-        assertTrue(validStory.getTopics().contains(testTopic));
-
-        // valid story
-        assertTrue(testTopic.getStories().contains(validStory));
-        assertTrue(validStory.getTopics().contains(testTopic));
-
-        testTopic.removeStory(validStory);
-        entityManager.flush();
-
-        assertFalse(testTopic.getStories().contains(validStory));
-        // Check that association still exists, since Topic is not the owning side
-        assertTrue(validStory.getTopics().contains(testTopic));
+        return null;
 
     }
 
-    /**
-     * Test Case - ES7 <br>
-     * Check if the Topic's add Child method functions as intended <br>
-     * Used by a parent to add children topics
-     */
-    @Test
-    public void testAddChild() {
-        Topic testTopic = new Topic("testName", author);
-        entityManager.persistAndFlush(testTopic);
+    private static Stream<Story> storyGenerator() {
+        return Stream.of(
+                null,
+                new Story("nonExistingStory", mockAuthor, "validContent")
+        );
+    }
 
-        // null
-        assertEquals(0, testTopic.getChildrenTopics().size());
+    private static Stream<Topic> topicGenerator() {
+        return Stream.of(
+                null,
+                new Topic("nonExistingTopic", mockAuthor)
+        );
+    }
 
-        assertThrows(NullPointerException.class, () -> {
-            testTopic.addChild(null);
-        });
+    private static Stream<String> generateLargeString() {
+        return Stream.of(String.join("", Collections.nCopies(500, "a")));
+    }
 
-        assertEquals(0, testTopic.getChildrenTopics().size());
 
-        // valid
-        assertEquals(0, testTopic.getChildrenTopics().size());
-        Topic newChild = new Topic("child", author);
+    @Nested
+    @DisplayName("Constructor tests")
+    @Tag("Constructor")
+    class constructorTests {
 
-        testTopic.addChild(newChild);
-        entityManager.flush();
+        @Test
+        @DisplayName("Constructor String, Author - Valid parameters")
+        public void constructorStringAuthor() {
 
-        entityManager.clear();
-        //testTopic = entityManager.find(Topic.class, testTopic.getId());
+            Topic testTopic = new Topic("testTopic", mockAuthor);
 
-        assertTrue(testTopic.getChildrenTopics().contains(newChild));
-        assertEquals(testTopic, newChild.getParentTopic());
+            assertAll(
+                    () -> assertNull(testTopic.getId(), "ID should be null before persistence"),
+                    () -> assertNull(testTopic.getCreationDate(), "Creation date should be null before persistence"),
+                    () -> assertEquals(TopicState.SUBMITTED, testTopic.getState(),
+                            "State should be SUBMITTED before persistence"),
+                    () -> assertEquals(0, testTopic.getStories().size(), "Associated stories should be 0"),
+                    () -> assertEquals(0, testTopic.getChildrenTopics().size(), "Children topics should be 0"),
+                    () -> assertNull(testTopic.getParentTopic(), "Parent topic should be null")
+                    );
 
-        // duplicate
-        assertEquals(1, testTopic.getChildrenTopics().size());
+            entityManager.persistAndFlush(testTopic);
 
-        testTopic.addChild(newChild);
-        entityManager.flush();
+            assertAll(
+                    () -> assertNotNull(testTopic.getId(), "ID should not be null after persistence"),
+                    () -> assertNotNull(testTopic.getCreationDate(), "Creation date should not be null after persistence"),
+                    () -> assertEquals(TopicState.SUBMITTED, testTopic.getState(),
+                            "State should be SUBMITTED after persistence"),
+                    () -> assertEquals(0, testTopic.getStories().size(), "Associated stories should be 0"),
+                    () -> assertEquals(0, testTopic.getChildrenTopics().size(), "Children topics should be 0"),
+                    () -> assertNull(testTopic.getParentTopic(), "Parent topic should be null"),
+                    () -> assertNotNull(entityManager.find(Topic.class, testTopic.getId()),
+                            "Entity should exist in the database after persistence")
+            );
 
-        assertEquals(1, testTopic.getChildrenTopics().size());
+        }
+
+        @Test
+        @DisplayName("Constructor String, Author, Topic - Valid parameters")
+        public void testConstructorStringAuthorTopic() {
+
+            Topic testTopic = new Topic("testTopic", mockAuthor, mockTopic);
+
+            assertAll(
+                    () -> assertNull(testTopic.getId(), "ID should be null before persistence"),
+                    () -> assertNull(testTopic.getCreationDate(), "Creation date should be null before persistence"),
+                    () -> assertEquals(TopicState.SUBMITTED, testTopic.getState(),
+                            "State should be SUBMITTED before persistence"),
+                    () -> assertEquals(0, testTopic.getStories().size(), "Associated stories should be 0"),
+                    () -> assertEquals(0, testTopic.getChildrenTopics().size(), "Children topics should be 0"),
+                    () -> assertSame(mockTopic, testTopic.getParentTopic(), "Provided parent topic and saved parent topic" +
+                            "should be the same")
+            );
+
+            entityManager.persistAndFlush(testTopic);
+
+            assertAll(
+                    () -> assertNotNull(testTopic.getId(), "ID should not be null after persistence"),
+                    () -> assertNotNull(testTopic.getCreationDate(), "Creation date should not be null after persistence"),
+                    () -> assertEquals(TopicState.SUBMITTED, testTopic.getState(),
+                            "State should be SUBMITTED after persistence"),
+                    () -> assertEquals(0, testTopic.getStories().size(), "Associated stories should be 0"),
+                    () -> assertEquals(0, testTopic.getChildrenTopics().size(), "Children topics should be 0"),
+                    () -> assertSame(mockTopic, testTopic.getParentTopic(), "Provided parent topic and saved parent topic" +
+                            "should be the same"),
+                    () -> assertNotNull(entityManager.find(Topic.class, testTopic.getId()),
+                            "Entity should exist in the database after persistence")
+            );
+
+        }
+
+        @Test
+        @DisplayName("Constructor  String, Author, Topic - Null Parent Topic")
+        public void testConstructorsNullParentTopic() {
+
+            assertThrows(NullPointerException.class, () ->
+                    entityManager.persist(new Topic("validName", mockAuthor, null)),
+                    "Constraint Violation Exception should be thrown" +
+                    "when parent topic is null"
+            );
+
+        }
+
+        @Test
+        @DisplayName("Constructor  String, Author, Topic - Non-Existing Parent Topic")
+        public void testConstructorsNonExistingParentTopic() {
+
+            Topic nonExistingTopic = new Topic ("validName", mockAuthor);
+            Topic testTopic = new Topic("validName", mockAuthor, nonExistingTopic);
+
+            assertThrows(IllegalStateException.class, () -> entityManager.persistAndFlush(testTopic),
+                    "An Illegal State Exception should be thrown when flushing the transaction" +
+                            "and a non-existing Topic has been specified in the database");
+
+        }
+
+        @ParameterizedTest
+        @DisplayName("Constructors - Invalid name")
+        @NullAndEmptySource
+        @MethodSource("gr.aegean.icsd.newspaperapp.entity.TopicTest#generateLargeString")
+        @ValueSource(strings = "   ")
+        public void testConstructorsInvalidName(String name) {
+
+            log.info("Testing name: " + name);
+
+            assertAll(
+                    () -> assertThrows(ConstraintViolationException.class, () ->
+                        entityManager.persist(new Topic(name, mockAuthor)),
+                            "Constraint violation exception should be thrown" +
+                            "when name is: " + name
+                    ),
+                    () -> assertThrows(ConstraintViolationException.class, () ->
+                        entityManager.persist(new Topic(name, mockAuthor, mockTopic)),
+                            "Constraint violation exception should be thrown" +
+                            "when name is: " + name
+                    )
+            );
+
+        }
+
+        @Test
+        @DisplayName("Constructors - Duplicate name")
+        public void testConstructorsDuplicateName() {
+
+            assertAll(
+                    () -> assertThrows(org.hibernate.exception.ConstraintViolationException.class, () ->
+                            entityManager.persist(new Topic(mockTopic.getName(), mockAuthor)),
+                            "Hibernate Constraint violation exception should be thrown" +
+                            "when specified name is not unique"
+                    ),
+                    () -> assertThrows(org.hibernate.exception.ConstraintViolationException.class, () ->
+                            entityManager.persist(new Topic(mockTopic.getName(), mockAuthor, mockTopic)),
+                            "Hibernate Constraint violation exception should be thrown" +
+                            "when specified name is not unique"
+                    )
+            );
+
+        }
+
+        @Test
+        @DisplayName("Constructors - Null author")
+        public void testConstructorsNullAuthor() {
+
+            assertAll(
+                    () -> assertThrows(org.hibernate.exception.ConstraintViolationException.class, () ->
+                            entityManager.persist(new Topic("validName", null)),
+                            "Hibernate Constraint violation exception should be thrown" +
+                            "when specified name is not unique"
+                    ),
+                    () -> assertThrows(org.hibernate.exception.ConstraintViolationException.class, () ->
+                            entityManager.persist(new Topic("validName", null, mockTopic)),
+                            "Hibernate Constraint violation exception should be thrown" +
+                            "when specified name is not unique"
+                    )
+            );
+
+        }
+
+        @Test
+        @DisplayName("Constructors - Non-Existing author")
+        public void testConstructorsInvalidAuthor() {
+
+            User nonExistingAuthor = new User("username","password",UserType.JOURNALIST);
+
+            assertAll(
+                    () -> assertThrows(IllegalStateException.class, () ->
+                            entityManager.persist(new Topic("validName", nonExistingAuthor)),
+                            "Illegal State Exception should be thrown" +
+                            "when specified author does not exist in the database"
+                    ),
+                    () -> assertThrows(IllegalStateException.class, () ->
+                            entityManager.persist(new Topic("validName", nonExistingAuthor, mockTopic)),
+                            "Illegal State Exception should be thrown" +
+                            "when specified author does not exist in the database"
+                    )
+            );
+
+        }
 
     }
 
-    /**
-     * Test Case - ES8 <br>
-     * Check if the Topic's add Child method functions as intended
-     * when adding a child Topic that does not exist. <br>
-     * This is a separate test case due to a bug <br>
-     */
-    @Test
-    public void testAddNonExistingChildTopic() {
-        Topic testTopic = new Topic("testName", author);
 
-        long parentTopicID = parentTopic.getId();
+    @Nested
+    @DisplayName("Setter method tests")
+    @Tag("SetterMethods")
+    class setterTests {
 
-        // non-existing
-        assertFalse(parentTopic.getChildrenTopics().contains(testTopic));
+        @Test
+        @DisplayName("setName with valid parameters")
+        public void testSetNameValid() {
 
-        parentTopic.addChild(testTopic);
-        entityManager.flush();
-
-        entityManager.clear();
-        parentTopic = entityManager.find(Topic.class, parentTopicID);
-
-        assertFalse(parentTopic.getChildrenTopics().contains(testTopic));
-    }
-
-    /**
-     * Test Case - ES9 <br>
-     * Check if the Topic's remove Child method functions as intended <br>
-     * Used by a parent to remove children topics
-     */
-    @Test
-    public void testRemoveChildTopic() {
-        Topic testTopic = new Topic("testName", author);
-        entityManager.persist(testTopic);
-        entityManager.flush();
-
-        testTopic.setParent(parentTopic);
-
-        entityManager.flush();
-        entityManager.refresh(parentTopic);
-
-        // null topic
-        assertTrue(parentTopic.getChildrenTopics().contains(testTopic));
-        assertEquals(parentTopic, testTopic.getParentTopic());
-
-        parentTopic.removeChild(null);
-        entityManager.flush();
-
-        assertTrue(parentTopic.getChildrenTopics().contains(testTopic));
-        assertEquals(parentTopic, testTopic.getParentTopic());
-
-        // non-existing topic
-        assertTrue(parentTopic.getChildrenTopics().contains(testTopic));
-        assertEquals(parentTopic, testTopic.getParentTopic());
-
-        parentTopic.removeChild(new Topic("non-existing",author));
-        entityManager.flush();
-
-        assertTrue(parentTopic.getChildrenTopics().contains(testTopic));
-        assertEquals(parentTopic, testTopic.getParentTopic());
-
-        // valid topic
-        assertTrue(parentTopic.getChildrenTopics().contains(testTopic));
-        assertEquals(parentTopic, testTopic.getParentTopic());
-
-        parentTopic.removeChild(testTopic);
-        entityManager.flush();
-
-        assertEquals(0, parentTopic.getChildrenTopics().size());
-        // Since parent topic is not the owning side, relationship should still exist
-        assertNotNull(testTopic.getParentTopic());
-    }
-
-    /**
-     * Test Case - ES10 <br>
-     * Check if the Topic's set parent method functions as intended
-     */
-    @Test
-    public void testSetParent() {
-        Topic testTopic = new Topic("testName", author);
-        entityManager.persistAndFlush(testTopic);
-        long testTopicID = testTopic.getId();
-        long parentTopicID = parentTopic.getId();
-
-        // null parent
-        assertNull(testTopic.getParentTopic());
-
-        testTopic.setParent(null);
-        entityManager.flush();
-
-        assertNull(testTopic.getParentTopic());
-
-        // non-existing parent
-        assertNull(testTopic.getParentTopic());
-
-        testTopic.setParent(new Topic("non-existing",author));
-        assertThrows(IllegalStateException.class, () -> {
+            mockTopic.setName("new Valid Name");
             entityManager.flush();
-        });
 
-        entityManager.clear();
-        testTopic = entityManager.find(Topic.class, testTopicID);
-        assertNull(testTopic.getParentTopic());
+            assertEquals("new Valid Name", mockTopic.getName(), "Strings should be equal");
 
-        // valid story
-        assertNull(testTopic.getParentTopic());
+        }
 
-        testTopic.setParent(parentTopic);
-        entityManager.flush();
+        @ParameterizedTest
+        @NullAndEmptySource
+        @ValueSource(strings = "   ")
+        @MethodSource(value = "gr.aegean.icsd.newspaperapp.entity.TopicTest#generateLargeString")
+        @DisplayName("setName with invalid parameters")
+        public void testSetName(String topicName) {
 
-        assertNotNull(testTopic.getParentTopic());
+            mockTopic.setName(topicName);
 
-        parentTopic = entityManager.find(Topic.class, parentTopicID);
-        assertTrue(parentTopic.getChildrenTopics().contains(testTopic));
+            assertThrows(ConstraintViolationException.class, () ->
+                entityManager.flush(),
+                "Constraint Violation Exception should be thrown when name is: " + topicName
+            );
+
+        }
+
+        @Test
+        @DisplayName("setName with duplicate name")
+        public void testSetNameDuplicate() {
+
+            Topic testTopic = new Topic("Valid Name", mockAuthor);
+            entityManager.persistAndFlush(testTopic);
+
+            testTopic.setName(mockTopic.getName());
+
+            assertThrows(org.hibernate.exception.ConstraintViolationException.class, () ->
+                    entityManager.flush(),
+                    "Hibernate Constraint Violation Exception should be thrown when a non unique name is set"
+            );
+
+        }
+
     }
 
-    @Test
-    public void testCascade() {
+
+    @Nested
+    @DisplayName("Entity Association tests")
+    @Tag("Associations")
+    class associationTests {
+
+        @Nested
+        @DisplayName("Topic-Story Association tests")
+        @Tag("TopicStoryAssociation")
+        class topicStoryAssociationTests {
+
+            @Test
+            @DisplayName("Create association with a valid Story")
+            public void addValidStory() {
+
+                mockTopic.addStory(mockStory);
+
+                entityManager.flush();
+                mockTopic = (Topic) remapEntity(mockTopic);
+
+                assertAll(
+                        () -> assertFalse(mockStory.getTopics().contains(mockTopic),
+                                "Story should not be associated with Topic, since Topic is not the" +
+                                        "owning side of the relationship"),
+                        () -> assertFalse(mockTopic.getStories().contains(mockStory),
+                                "Topic should not be associated with Story, Topic Story is not the" +
+                                        "owning side of the relationship")
+                );
+
+            }
+
+            @Test
+            @DisplayName("Create association with a duplicate Story")
+            public void addDuplicateStory() {
+
+                mockStory.addTopic(mockTopic);
+                mockTopic.addStory(mockStory);
+
+                entityManager.flush();
+
+                assertTrue(mockTopic.getStories().contains(mockStory),
+                        "Topic should be associated with the new Story");
+
+                assertTrue(mockStory.getTopics().contains(mockTopic),
+                        "Story should be associated with the new Topic");
+
+                // Adding twice
+                mockTopic.addStory(mockStory);
+                entityManager.flush();
+
+                mockTopic = (Topic) remapEntity(mockTopic);
+
+                assertEquals(1, mockTopic.getStories().size(),
+                        "Duplicate topic shouldn't have been added");
+
+            }
+
+            @ParameterizedTest
+            @MethodSource("gr.aegean.icsd.newspaperapp.entity.TopicTest#storyGenerator")
+            @DisplayName("Create association with an invalid Story")
+            public void addStoryTest(Story testStory) {
+
+                mockTopic.addStory(testStory);
+                entityManager.flush();
+
+                mockTopic = (Topic) remapEntity(mockTopic);
+
+                assertTrue(mockTopic.getStories().isEmpty());
+
+            }
+
+            @Test
+            @DisplayName("Remove association with a valid Story")
+            public void removeValidStoryTest() {
+
+                // Add a Story
+                mockStory.addTopic(mockTopic);
+                mockTopic.addStory(mockStory);
+
+                entityManager.flush();
+
+                assertTrue(mockTopic.getStories().contains(mockStory),
+                        "Topic should be associated with the new Story");
+
+                assertTrue(mockStory.getTopics().contains(mockTopic),
+                        "Story should be associated with the new Topic");
+
+                mockTopic.removeStory(mockStory);
+                entityManager.flush();
+
+                mockTopic = (Topic) remapEntity(mockTopic);
+
+                assertEquals(1, mockTopic.getStories().size(),
+                        "The size of the Topic's Story list should be equal to one"
+                );
+
+            }
+
+            @ParameterizedTest
+            @MethodSource("gr.aegean.icsd.newspaperapp.entity.TopicTest#storyGenerator")
+            @DisplayName("Remove association with an invalid Story")
+            public void removeStoryTest(Story testStory) {
+
+                // Add a Story
+                mockStory.addTopic(mockTopic);
+                mockTopic.addStory(mockStory);
+
+                entityManager.flush();
+
+                assertTrue(mockTopic.getStories().contains(mockStory),
+                        "Topic should be associated with the new Story");
+
+                assertTrue(mockStory.getTopics().contains(mockTopic),
+                        "Story should be associated with the new Topic");
+
+                mockTopic.removeStory(testStory);
+                entityManager.flush();
+
+                mockTopic = (Topic) remapEntity(mockTopic);
+
+                assertEquals(1, mockTopic.getStories().size(),
+                        "The size of the Topic's Story list should be equal to one"
+                );
+
+            }
+
+        }
+
+        @Nested
+        @DisplayName("Topic-Topic Association tests")
+        @Tag("TopicTopicAssociation")
+        class topicTopicAssociationTests {
+
+            Topic validChildTopic;
+
+            @BeforeEach
+            public void createChildTopic() {
+                validChildTopic = new Topic("validChildName", mockAuthor);
+                entityManager.persistAndFlush(validChildTopic);
+            }
+
+            @Test
+            @DisplayName("Create association with a valid child Topic")
+            public void addValidChild() {
+
+                mockTopic.addChild(validChildTopic);
+
+                entityManager.flush();
+                mockTopic = (Topic) remapEntity(mockTopic);
+
+                assertAll(
+                        () -> assertTrue(mockTopic.getChildrenTopics().isEmpty(),
+                                "Parent topic's children should not contain the child," +
+                                        " since the child is the owning side"),
+                        () -> assertNull(validChildTopic.getParentTopic(),
+                                "Child topic's parent should be null, since the child is the owning side")
+                );
+
+            }
+
+            @ParameterizedTest
+            @MethodSource("gr.aegean.icsd.newspaperapp.entity.TopicTest#topicGenerator")
+            @DisplayName("Create association with an invalid child Topic")
+            public void addInvalidChild(Topic childTopic) {
+
+                mockTopic.addChild(childTopic);
+
+                entityManager.flush();
+                mockTopic = (Topic) remapEntity(mockTopic);
+
+                assertTrue(mockTopic.getChildrenTopics().isEmpty(),
+                        "Parent topic's children should not contain the child," +
+                                " since the child is the owning side");
+
+            }
+
+            @Test
+            @DisplayName("Create association with a duplicate child Topic")
+            public void addDuplicateChild() {
+
+                mockTopic.addChild(validChildTopic);
+                validChildTopic.setParent(mockTopic);
+
+                entityManager.flush();
+
+                assertTrue(mockTopic.getChildrenTopics().contains(validChildTopic),
+                        "Topic should be associated with the new child");
+
+                assertSame(mockTopic, validChildTopic.getParentTopic(),
+                        "Child should be associated with the new parent");
+
+                // Adding twice
+                mockTopic.addChild(validChildTopic);
+                entityManager.flush();
+
+                mockTopic = (Topic) remapEntity(mockTopic);
+
+                assertEquals(1, mockTopic.getChildrenTopics().size(),
+                        "Duplicate topic shouldn't have been added");
+
+            }
+
+            @Test
+            @DisplayName("Create association with self")
+            public void addSelfAsChild() {
+
+                assertThrows(RuntimeException.class, () ->
+                        mockTopic.addChild(mockTopic),
+                        "Runtime Exception should be thrown when setting self as a child");
+
+            }
+
+            @Test
+            @DisplayName("Remove association with a valid child Topic")
+            public void removeValidChild() {
+
+                validChildTopic.setParent(mockTopic);
+                entityManager.flush();
+                entityManager.refresh(mockTopic);
+
+                assertTrue(mockTopic.getChildrenTopics().contains(validChildTopic),
+                        "Parent Topic must be associated with the child");
+
+                assertEquals(mockTopic, validChildTopic.getParentTopic(),
+                        "Child Topic must be associated with the parent");
+
+                mockTopic.removeChild(validChildTopic);
+                entityManager.flush();
+
+                mockTopic = (Topic) remapEntity(mockTopic);
+
+                assertEquals(1, mockTopic.getChildrenTopics().size(),
+                        "Parent Topic must still be associated with child, since the child is the owning side");
+            }
+
+            @ParameterizedTest
+            @MethodSource("gr.aegean.icsd.newspaperapp.entity.TopicTest#topicGenerator")
+            @DisplayName("Remove association with an invalid child Topic")
+            public void removeInvalidChild(Topic testTopic) {
+
+                validChildTopic.setParent(mockTopic);
+                entityManager.flush();
+                entityManager.refresh(mockTopic);
+
+                assertTrue(mockTopic.getChildrenTopics().contains(validChildTopic),
+                        "Parent Topic must be associated with the child");
+
+                assertEquals(mockTopic, validChildTopic.getParentTopic(),
+                        "Child Topic must be associated with the parent");
+
+                mockTopic.removeChild(testTopic);
+                entityManager.flush();
+
+                mockTopic = (Topic) remapEntity(mockTopic);
+
+                assertEquals(1, mockTopic.getChildrenTopics().size(),
+                        "Parent Topic must still be associated with child, since an invalid topic was removed");
+
+            }
+
+            @Test
+            @DisplayName("Create parental association with a valid parent topic")
+            public void setValidParent() {
+
+                validChildTopic.setParent(mockTopic);
+                entityManager.flush();
+
+                entityManager.refresh(mockTopic);
+
+                assertAll(
+                        () -> assertTrue(mockTopic.getChildrenTopics().contains(validChildTopic),
+                                "Parent topic should be associated with child, since child is owner of" +
+                                        "the association"),
+                        () -> assertSame(mockTopic, validChildTopic.getParentTopic(),
+                                "Child topic should have been associated with the parent")
+                );
+
+            }
+
+            @Test
+            @DisplayName("Create parental association with an invalid parent topic")
+            public void setInvalidParent() {
+
+                Topic nonExistingTopic = new Topic("nonExistingTopic", mockAuthor);
+
+                validChildTopic.setParent(nonExistingTopic);
+
+                assertThrows(IllegalStateException.class, () -> entityManager.flush());
+
+            }
+
+            @Test
+            @DisplayName("Create parental association with self")
+            public void setSelfAsParent() {
+
+                assertThrows(RuntimeException.class, () -> mockTopic.setParent(mockTopic),
+                        "A Runtime Exception should be thrown when trying to set self as a parent topic");
+
+            }
+
+            @Test
+            @DisplayName("Remove parental association with a parent")
+            public void removeParent() {
+
+                validChildTopic.setParent(mockTopic);
+                entityManager.flush();
+                entityManager.refresh(mockTopic);
+
+                validChildTopic.setParent(null);
+                entityManager.flush();
+                entityManager.refresh(mockTopic);
+
+                assertAll(
+                        () -> assertTrue(mockTopic.getChildrenTopics().isEmpty(),
+                                "Parent Topic should no longer be associated with the child"),
+                        () -> assertNull(validChildTopic.getParentTopic(),
+                                "Child Topic should no longer be associated with the parent")
+                );
+
+            }
+
+            @Test
+            @DisplayName("Change parent")
+            public void changeParent() {
+
+                validChildTopic.setParent(mockTopic);
+                entityManager.flush();
+                entityManager.refresh(mockTopic);
+
+                Topic newParent = new Topic("newParent", mockAuthor);
+                entityManager.persistAndFlush(newParent);
+
+                validChildTopic.setParent(newParent);
+
+                entityManager.flush();
+                entityManager.refresh(newParent);
+                entityManager.refresh(mockTopic);
+
+                assertAll(
+                        () -> assertTrue(newParent.getChildrenTopics().contains(validChildTopic),
+                                "New parent topic should be associated with child, since child is owner of" +
+                                        "the association"),
+                        () -> assertSame(newParent, validChildTopic.getParentTopic(),
+                                "Child topic should have been associated with the new parent")
+                );
+            }
+        }
+
+        @Nested
+        @DisplayName("Cascading behaviour tests")
+        @Tag("Cascade")
+        class cascadingTests {
+
+            @Test
+            @DisplayName("Delete a Topic - Story and Children Topics persist")
+            public void deleteTopicPersistStory() {
+
+                Topic validChildTopic = new Topic("validChildTopic", mockAuthor);
+                entityManager.persistAndFlush(validChildTopic);
+
+                long mockTopicID = mockTopic.getId();
+                long mockStoryID = mockStory.getId();
+                long validChildTopicID = validChildTopic.getId();
+
+                // Create associations
+                mockStory.addTopic(mockTopic);
+                mockTopic.addStory(mockStory);
+                validChildTopic.setParent(mockTopic);
+                entityManager.flush();
+
+                entityManager.refresh(validChildTopic);
+                entityManager.refresh(mockTopic);
+                entityManager.refresh(mockStory);
+
+                // Ensure they exist
+                assertTrue(mockStory.getTopics().contains(mockTopic));
+                assertTrue(mockTopic.getStories().contains(mockStory));
+                assertSame(mockTopic, validChildTopic.getParentTopic());
+
+                // Delete the parent Topic
+                entityManager.remove(mockTopic);
+                entityManager.flush();
+
+                // Clear persistence context and refresh entities from db
+                entityManager.clear();
+
+                mockStory = entityManager.find(Story.class, mockStoryID);
+                mockTopic = entityManager.find(Topic.class, mockTopicID);
+                Topic remappedValidChildTopic = entityManager.find(Topic.class, validChildTopicID);
+
+                assertAll(
+                        // Topic is deleted
+                        () -> assertNull(entityManager.find(Topic.class, mockTopicID)),
+
+                        // Story still exists
+                        () -> assertNotNull(entityManager.find(Story.class, mockStoryID)),
+
+                        // Story is not associated with deleted Topic
+                        () -> assertTrue(mockStory.getTopics().isEmpty()),
+
+                        // Child Topic still exists
+                        () -> assertNotNull(entityManager.find(Topic.class, validChildTopicID)),
+
+                        // Child Topic is not associated with deleted parent Topic
+                        () -> assertNull(remappedValidChildTopic.getParentTopic())
+                );
+
+            }
+
+            @Test
+            @DisplayName("Update a Topic - Change reflected in Story and Children Topics")
+            public void updateTopicCascade() {
+
+                Topic validChildTopic = new Topic("validChildTopic", mockAuthor);
+                entityManager.persistAndFlush(validChildTopic);
+
+                long mockTopicID = mockTopic.getId();
+                long mockStoryID = mockStory.getId();
+                long validChildTopicID = validChildTopic.getId();
+
+                // Create associations
+                mockStory.addTopic(mockTopic);
+                mockTopic.addStory(mockStory);
+                validChildTopic.setParent(mockTopic);
+                entityManager.flush();
+
+                entityManager.refresh(validChildTopic);
+                entityManager.refresh(mockTopic);
+                entityManager.refresh(mockStory);
+
+                // Ensure they exist
+                assertTrue(mockStory.getTopics().contains(mockTopic));
+                assertTrue(mockTopic.getStories().contains(mockStory));
+                assertSame(mockTopic, validChildTopic.getParentTopic());
+
+                // Modify the parent Topic's name
+                mockTopic.setName("updatedName");
+                entityManager.flush();
+
+                // Clear persistence context and refresh entities from db
+                entityManager.clear();
+
+                mockStory = entityManager.find(Story.class, mockStoryID);
+                mockTopic = entityManager.find(Topic.class, mockTopicID);
+                Topic remappedValidChildTopic = entityManager.find(Topic.class, validChildTopicID);
+
+                assertAll(
+
+                        // Topic is updated
+                        () -> assertEquals("updatedName", mockTopic.getName(),
+                                "Topic's name should have been updated"),
+
+                        // Story is updated
+                        () -> assertEquals("updatedName", mockStory.getTopics().stream().toList().get(0).getName(),
+                                "The changes in the Topic should be reflected in the associated Story"),
+
+                        // Child Topic is updated
+                        () -> assertEquals("updatedName", remappedValidChildTopic.getParentTopic().getName(),
+                                "The changes in the parent Topic should be reflected in the child Topic")
+
+                );
+
+            }
+
+            @Test
+            @DisplayName("Delete a child Topic - Parent persists")
+            public void deleteChildTopic() {
+                Topic validChildTopic = new Topic("validChildTopic", mockAuthor);
+                entityManager.persistAndFlush(validChildTopic);
+
+                long mockTopicID = mockTopic.getId();
+                long validChildTopicID = validChildTopic.getId();
+
+                // Create associations
+                validChildTopic.setParent(mockTopic);
+                entityManager.flush();
+
+                entityManager.refresh(validChildTopic);
+                entityManager.refresh(mockTopic);
+
+                // Ensure associations exist
+                assertTrue(mockTopic.getChildrenTopics().contains(validChildTopic));
+                assertSame(mockTopic, validChildTopic.getParentTopic());
+
+                // Remove child topic
+                entityManager.remove(validChildTopic);
+                entityManager.flush();
+
+                // Clear persistence context and refresh entities from db
+                entityManager.clear();
+
+                mockTopic = entityManager.find(Topic.class, mockTopicID);
+                Topic remappedValidChildTopic = entityManager.find(Topic.class, validChildTopicID);
+
+                assertAll(
+
+                        // Child Topic is removed
+                        () -> assertNull(remappedValidChildTopic, "Child Topic should have been removed"),
+
+                        // Parent Topic exists
+                        () -> assertNotNull(mockTopic, "Parent Topic shouldn't have been removed"),
+
+                        // Parent Topic is no longer associated with the child Topic
+                        () -> assertTrue(mockTopic.getChildrenTopics().isEmpty(),
+                                "Parent Topic should no longer be associated with the Child")
+
+                );
+            }
+
+        }   // TODO: Improve naming
 
     }
 
-    @Test
-    public void testAssociation() {
-        Topic testTopic = new Topic("testName", author);
-        entityManager.persistAndFlush(testTopic);
 
-        long testTopicID = testTopic.getId();
-
-        // Create association with non-existing story
-        assertEquals(0, testTopic.getStories().size());
-
-        Story nonExistingStory = new Story("nonExisting", author, "content");
-        nonExistingStory.addTopic(testTopic);
-        testTopic.addStory(nonExistingStory);
-
-        entityManager.flush();
-        entityManager.clear();
-        testTopic = entityManager.find(Topic.class, testTopicID);
-
-        assertEquals(0, testTopic.getStories().size());
-    }
 }
