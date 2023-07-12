@@ -79,7 +79,7 @@ public class Topic {
      * Many Stories can be associated with the same Topic
      */
     @ManyToMany(mappedBy = "topicsList", cascade = CascadeType.REFRESH, targetEntity = Story.class)
-    private Set<Story> storiesList = new HashSet<Story>();
+    private final Set<Story> storiesList = new HashSet<>();
 
     /**
      * List of Children Topics <br>
@@ -87,7 +87,7 @@ public class Topic {
      */
     @OneToMany(mappedBy = "parentTopicID", targetEntity = Topic.class,
             cascade = {CascadeType.REFRESH})
-    private Set<Topic> topicsList = new HashSet<Topic>();
+    private final Set<Topic> topicsList = new HashSet<>();
 
     /**
      * Parent Topic of the Topic <br>
@@ -139,6 +139,23 @@ public class Topic {
     @PrePersist
     private void generateCreationDate() {
         this.creationDate = Date.from(LocalDateTime.now().toInstant(ZoneOffset.UTC));
+    }
+
+    /**
+     * Removes all the associations this Topic has
+     * prior to removal <br><br>
+     */
+    @PreRemove
+    private void removeForeignKeyConstraints() {
+
+        for (Story story : storiesList) {
+            story.removeTopic(this);
+        }
+
+        for (Topic childTopic : topicsList) {
+            childTopic.setParent(null);
+        }
+
     }
 
     // GETTERS
@@ -218,7 +235,7 @@ public class Topic {
      * @param newName The new name of the Topic
      */
     public void setName(String newName) {
-        this.name = name;
+        this.name = newName;
     }
 
     // UTILITY
