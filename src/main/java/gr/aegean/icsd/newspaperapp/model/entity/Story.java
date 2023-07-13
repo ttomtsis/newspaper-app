@@ -183,7 +183,7 @@ public class Story {
      * @see #Story(String, User, String)
      * @see #Story(String, User, String, Set)
      *
-     * @throws RuntimeException If the list of Topics is empty or null
+     * @throws NullPointerException If the Topic provided is null
      */
     public Story(String storyName, User storyAuthor, String storyContent, Topic storyTopic) {
 
@@ -195,7 +195,7 @@ public class Story {
             this.state = StoryState.CREATED;
         }
         else {
-            throw new RuntimeException("Topic cannot be null");
+            throw new NullPointerException("Topic cannot be null");
         }
 
     }
@@ -308,15 +308,9 @@ public class Story {
      * New name cannot be empty, null or be greater than {@link #maximumNameLength}
      *
      * @param newName New name of the Story
-     * @throws RuntimeException If new name does not conform to the constraints mentioned
      */
     public void setName(String newName) {
-        if (newName != null && !newName.isBlank() && newName.length() <= maximumNameLength) {
-            this.name = newName;
-        }
-        else {
-            throw new RuntimeException("New name is not valid");
-        }
+        this.name = newName;
     }
 
     /**
@@ -325,15 +319,9 @@ public class Story {
      * New content cannot be empty, null or be greater than {@link #maximumContentLength}
      *
      * @param newContent New content of the Story
-     * @throws RuntimeException If new content does not conform to the constraints mentioned
      */
     public void setContent(String newContent) {
-        if (newContent != null && !newContent.isBlank() && newContent.length() <= maximumContentLength) {
-            this.content = newContent;
-        }
-        else {
-            throw new RuntimeException("New content is not valid");
-        }
+        this.content = newContent;
     }
 
     /**
