@@ -45,8 +45,8 @@ public class Story {
 
     /**
      * State of the Story, valid states are declared in
-     *
      * {@link StoryState}
+     *
      * @see StoryState
      */
     @Enumerated(EnumType.STRING)
