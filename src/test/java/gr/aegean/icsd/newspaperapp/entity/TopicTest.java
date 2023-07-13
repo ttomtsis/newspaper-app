@@ -1,6 +1,5 @@
 package gr.aegean.icsd.newspaperapp.entity;
 
-import gr.aegean.icsd.newspaperapp.model.entity.Comment;
 import gr.aegean.icsd.newspaperapp.model.entity.Story;
 import gr.aegean.icsd.newspaperapp.model.entity.Topic;
 import gr.aegean.icsd.newspaperapp.model.entity.User;
@@ -35,9 +34,8 @@ import static org.junit.jupiter.api.Assertions.*;
 @DisplayName("Topic Entity tests")
 @Tag("Entity")
 @Tag("Topic")
-public class TopicTest <Entity> {
+public class TopicTest {
 
-    //TODO: Add documentation
     @Autowired
     private TestEntityManager entityManager;
 
@@ -62,27 +60,6 @@ public class TopicTest <Entity> {
         entityManager.persist(mockTopic);
         entityManager.persist(mockStory);
         entityManager.flush();
-
-    }
-
-    Entity remapEntity(Object oldEntityVersion) {
-
-        entityManager.clear();
-
-        if (oldEntityVersion instanceof Story oldStoryVersion) {
-            return (Entity) entityManager.find(Story.class, oldStoryVersion.getId());
-        }
-        else if (oldEntityVersion instanceof Topic oldTopicVersion) {
-            return (Entity) entityManager.find(Topic.class, oldTopicVersion.getId());
-        }
-        else if (oldEntityVersion instanceof Comment oldCommentVersion) {
-            return (Entity) entityManager.find(Comment.class, oldCommentVersion.getId());
-        }
-        else if (oldEntityVersion instanceof User oldUserVersion) {
-            return (Entity) entityManager.find(User.class, oldUserVersion.getId());
-        }
-
-        return null;
 
     }
 
@@ -144,7 +121,7 @@ public class TopicTest <Entity> {
 
         @Test
         @DisplayName("Constructor String, Author, Topic - Valid parameters")
-        public void testConstructorStringAuthorTopic() {
+        public void constructorStringAuthorTopic() {
 
             Topic testTopic = new Topic("testTopic", mockAuthor, mockTopic);
 
@@ -177,8 +154,8 @@ public class TopicTest <Entity> {
         }
 
         @Test
-        @DisplayName("Constructor  String, Author, Topic - Null Parent Topic")
-        public void testConstructorsNullParentTopic() {
+        @DisplayName("Null Parent Topic")
+        public void nullParentTopic() {
 
             assertThrows(NullPointerException.class, () ->
                     entityManager.persist(new Topic("validName", mockAuthor, null)),
@@ -189,8 +166,8 @@ public class TopicTest <Entity> {
         }
 
         @Test
-        @DisplayName("Constructor  String, Author, Topic - Non-Existing Parent Topic")
-        public void testConstructorsNonExistingParentTopic() {
+        @DisplayName("Non-Existing Parent Topic")
+        public void nonExistingParentTopic() {
 
             Topic nonExistingTopic = new Topic ("validName", mockAuthor);
             Topic testTopic = new Topic("validName", mockAuthor, nonExistingTopic);
@@ -202,11 +179,11 @@ public class TopicTest <Entity> {
         }
 
         @ParameterizedTest
-        @DisplayName("Constructors - Invalid name")
+        @DisplayName("Invalid name")
         @NullAndEmptySource
         @MethodSource("gr.aegean.icsd.newspaperapp.entity.TopicTest#generateLargeString")
         @ValueSource(strings = "   ")
-        public void testConstructorsInvalidName(String name) {
+        public void invalidName(String name) {
 
             log.info("Testing name: " + name);
 
@@ -226,8 +203,8 @@ public class TopicTest <Entity> {
         }
 
         @Test
-        @DisplayName("Constructors - Duplicate name")
-        public void testConstructorsDuplicateName() {
+        @DisplayName("Duplicate name")
+        public void duplicateName() {
 
             assertAll(
                     () -> assertThrows(org.hibernate.exception.ConstraintViolationException.class, () ->
@@ -245,8 +222,8 @@ public class TopicTest <Entity> {
         }
 
         @Test
-        @DisplayName("Constructors - Null author")
-        public void testConstructorsNullAuthor() {
+        @DisplayName("Null author")
+        public void nullAuthor() {
 
             assertAll(
                     () -> assertThrows(org.hibernate.exception.ConstraintViolationException.class, () ->
@@ -264,8 +241,8 @@ public class TopicTest <Entity> {
         }
 
         @Test
-        @DisplayName("Constructors - Non-Existing author")
-        public void testConstructorsInvalidAuthor() {
+        @DisplayName("Non-Existing author")
+        public void invalidAuthor() {
 
             User nonExistingAuthor = new User("username","password",UserType.JOURNALIST);
 
@@ -355,12 +332,14 @@ public class TopicTest <Entity> {
                 mockTopic.addStory(mockStory);
 
                 entityManager.flush();
-                mockTopic = (Topic) remapEntity(mockTopic);
+
+                mockTopic = entityManager.refresh(mockTopic);
 
                 assertAll(
                         () -> assertFalse(mockStory.getTopics().contains(mockTopic),
                                 "Story should not be associated with Topic, since Topic is not the" +
                                         "owning side of the relationship"),
+
                         () -> assertFalse(mockTopic.getStories().contains(mockStory),
                                 "Topic should not be associated with Story, Topic Story is not the" +
                                         "owning side of the relationship")
@@ -387,7 +366,7 @@ public class TopicTest <Entity> {
                 mockTopic.addStory(mockStory);
                 entityManager.flush();
 
-                mockTopic = (Topic) remapEntity(mockTopic);
+                mockTopic = entityManager.refresh(mockTopic);
 
                 assertEquals(1, mockTopic.getStories().size(),
                         "Duplicate topic shouldn't have been added");
@@ -402,7 +381,8 @@ public class TopicTest <Entity> {
                 mockTopic.addStory(testStory);
                 entityManager.flush();
 
-                mockTopic = (Topic) remapEntity(mockTopic);
+                entityManager.clear();
+                mockTopic = entityManager.find(Topic.class, mockTopic.getId());
 
                 assertTrue(mockTopic.getStories().isEmpty());
 
@@ -427,7 +407,7 @@ public class TopicTest <Entity> {
                 mockTopic.removeStory(mockStory);
                 entityManager.flush();
 
-                mockTopic = (Topic) remapEntity(mockTopic);
+                mockTopic = entityManager.refresh(mockTopic);
 
                 assertEquals(1, mockTopic.getStories().size(),
                         "The size of the Topic's Story list should be equal to one"
@@ -455,7 +435,7 @@ public class TopicTest <Entity> {
                 mockTopic.removeStory(testStory);
                 entityManager.flush();
 
-                mockTopic = (Topic) remapEntity(mockTopic);
+                mockTopic = entityManager.refresh(mockTopic);
 
                 assertEquals(1, mockTopic.getStories().size(),
                         "The size of the Topic's Story list should be equal to one"
@@ -485,7 +465,7 @@ public class TopicTest <Entity> {
                 mockTopic.addChild(validChildTopic);
 
                 entityManager.flush();
-                mockTopic = (Topic) remapEntity(mockTopic);
+                mockTopic = entityManager.refresh(mockTopic);
 
                 assertAll(
                         () -> assertTrue(mockTopic.getChildrenTopics().isEmpty(),
@@ -505,7 +485,8 @@ public class TopicTest <Entity> {
                 mockTopic.addChild(childTopic);
 
                 entityManager.flush();
-                mockTopic = (Topic) remapEntity(mockTopic);
+                entityManager.clear();
+                mockTopic = entityManager.find(Topic.class, mockTopic.getId());
 
                 assertTrue(mockTopic.getChildrenTopics().isEmpty(),
                         "Parent topic's children should not contain the child," +
@@ -532,7 +513,7 @@ public class TopicTest <Entity> {
                 mockTopic.addChild(validChildTopic);
                 entityManager.flush();
 
-                mockTopic = (Topic) remapEntity(mockTopic);
+                mockTopic = entityManager.refresh(mockTopic);
 
                 assertEquals(1, mockTopic.getChildrenTopics().size(),
                         "Duplicate topic shouldn't have been added");
@@ -566,7 +547,7 @@ public class TopicTest <Entity> {
                 mockTopic.removeChild(validChildTopic);
                 entityManager.flush();
 
-                mockTopic = (Topic) remapEntity(mockTopic);
+                mockTopic = entityManager.refresh(mockTopic);
 
                 assertEquals(1, mockTopic.getChildrenTopics().size(),
                         "Parent Topic must still be associated with child, since the child is the owning side");
@@ -590,7 +571,7 @@ public class TopicTest <Entity> {
                 mockTopic.removeChild(testTopic);
                 entityManager.flush();
 
-                mockTopic = (Topic) remapEntity(mockTopic);
+                mockTopic = entityManager.refresh(mockTopic);
 
                 assertEquals(1, mockTopic.getChildrenTopics().size(),
                         "Parent Topic must still be associated with child, since an invalid topic was removed");
@@ -691,8 +672,8 @@ public class TopicTest <Entity> {
         class cascadingTests {
 
             @Test
-            @DisplayName("Delete a Topic - Story and Children Topics persist")
-            public void deleteTopicPersistStory() {
+            @DisplayName("On Delete Topic Cascade")
+            public void deleteTopic() {
 
                 Topic validChildTopic = new Topic("validChildTopic", mockAuthor);
                 entityManager.persistAndFlush(validChildTopic);
@@ -747,7 +728,7 @@ public class TopicTest <Entity> {
             }
 
             @Test
-            @DisplayName("Update a Topic - Change reflected in Story and Children Topics")
+            @DisplayName("On Update Topic Cascade")
             public void updateTopicCascade() {
 
                 Topic validChildTopic = new Topic("validChildTopic", mockAuthor);
@@ -802,7 +783,7 @@ public class TopicTest <Entity> {
             }
 
             @Test
-            @DisplayName("Delete a child Topic - Parent persists")
+            @DisplayName("On Delete Child Topic Cascade")
             public void deleteChildTopic() {
                 Topic validChildTopic = new Topic("validChildTopic", mockAuthor);
                 entityManager.persistAndFlush(validChildTopic);
@@ -846,7 +827,7 @@ public class TopicTest <Entity> {
                 );
             }
 
-        }   // TODO: Improve naming
+        }
 
     }
 
