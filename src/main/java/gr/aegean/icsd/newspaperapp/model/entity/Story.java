@@ -15,6 +15,7 @@ import java.util.Set;
 
 /**
  * Entity representing the Story resource
+ *
  * @see #Story(String, User, String)
  * @see #Story(String, User, String, Set)
  * @see #Story(String, User, String, Topic) 
@@ -33,7 +34,9 @@ public class Story {
     /**
      * Date the Story was created, assigned by the server
      * before persisting the entity in the database. <br>
+     *
      * Date will be in the format E, dd/MMMM/yyyy, HH:mm:ss
+     *
      * @see #generateCreationDate()
      */
     @Temporal(TemporalType.DATE)
@@ -42,6 +45,7 @@ public class Story {
 
     /**
      * State of the Story, valid states are declared in
+     *
      * {@link StoryState}
      * @see StoryState
      */
@@ -51,6 +55,7 @@ public class Story {
 
     /**
      * Sets the maximum allowed length of the Story's name
+     *
      * @see #name
      */
     @Transient
@@ -58,6 +63,7 @@ public class Story {
 
     /**
      * Sets the maximum allowed length of the Story's rejectionReason
+     *
      * @see #rejectionReason
      */
     @Transient
@@ -65,6 +71,7 @@ public class Story {
 
     /**
      * Sets the maximum allowed length of the Story's content
+     *
      * @see #content
      */
     @Transient
@@ -72,6 +79,7 @@ public class Story {
 
     /**
      * The name of the Story <br>
+     *
      * Every Story name is unique and cannot be null, blank, or exceed {@link #maximumNameLength}
      */
     @NotBlank
@@ -81,6 +89,7 @@ public class Story {
 
     /**
      * Reason that a Story was rejected. <br>
+     *
      * This field is not null IF AND ONLY IF a Story
      * has been rejected.
      */
@@ -89,6 +98,7 @@ public class Story {
 
     /**
      * The content of the Story <br>
+     *
      * Content cannot be null, empty, or exceed {@link #maximumContentLength}
      */
     @Size(max = maximumContentLength)
@@ -97,6 +107,7 @@ public class Story {
 
     /**
      * Comments associated with the Story. <br>
+     *
      * One Story may have plenty of Comments <br>
      * Obviously a Comment can only belong to one Story
      */
@@ -106,6 +117,7 @@ public class Story {
 
     /**
      * Author of the Story. <br>
+     *
      * Many Stories can have the same Author <br>
      * Only one Author per Story is allowed
      */
@@ -115,6 +127,7 @@ public class Story {
 
     /**
      * Topics that this Story belongs to. <br>
+     *
      * A Story can belong in many Topics at once <br>
      * Many Topics can be associated with the same Story <br>
      */
@@ -153,7 +166,7 @@ public class Story {
      * @see #Story(String, User, String)
      * @see #Story(String, User, String, Topic)
      *
-     * @throws RuntimeException If the list of Topics is empty or null
+     * @throws IllegalArgumentException If the list of Topics is empty or null
      */
     public Story(String storyName, User storyAuthor, String storyContent, Set<Topic> storyTopics) {
         if (storyTopics != null && !storyTopics.isEmpty()) {
@@ -164,7 +177,7 @@ public class Story {
             this.state = StoryState.CREATED;
         }
         else {
-            throw new RuntimeException("You must provide at least 1 Topic");
+            throw new IllegalArgumentException("You must provide at least 1 Topic");
         }
 
     }
@@ -183,7 +196,7 @@ public class Story {
      * @see #Story(String, User, String)
      * @see #Story(String, User, String, Set)
      *
-     * @throws NullPointerException If the Topic provided is null
+     * @throws IllegalArgumentException If the Topic provided is null
      */
     public Story(String storyName, User storyAuthor, String storyContent, Topic storyTopic) {
 
@@ -195,7 +208,7 @@ public class Story {
             this.state = StoryState.CREATED;
         }
         else {
-            throw new NullPointerException("Topic cannot be null");
+            throw new IllegalArgumentException("Topic cannot be null");
         }
 
     }
@@ -330,14 +343,14 @@ public class Story {
      * New rejection reason cannot be empty, null or be greater than {@link #maximumRejectionReasonLength}
      *
      * @param newReason New rejection reason for the Story
-     * @throws RuntimeException If new rejectionReason does not conform to the constraints mentioned
+     * @throws IllegalArgumentException If new rejectionReason does not conform to the constraints mentioned
      */
     public void setRejectionReason(String newReason) {
         if (newReason != null && !newReason.isBlank() && newReason.length() <= maximumContentLength) {
             this.rejectionReason = newReason;
         }
         else {
-            throw new RuntimeException("The rejection reason is not valid");
+            throw new IllegalArgumentException("The rejection reason is not valid");
         }
     }
 
@@ -358,14 +371,14 @@ public class Story {
      * Adds a Topic to the Topic list <br>
      *
      * @param newTopic Topic to be added
-     * @throws NullPointerException If newTopic is null
+     * @throws IllegalArgumentException If newTopic is null
      */
     public void addTopic(Topic newTopic) {
         if (newTopic != null) {
             topicsList.add(newTopic);
         }
         else {
-            throw new NullPointerException("New Topic cannot be null");
+            throw new IllegalArgumentException("New Topic cannot be null");
         }
     }
 

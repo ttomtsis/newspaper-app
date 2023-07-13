@@ -15,6 +15,7 @@ import java.util.Set;
 
 /**
  * Entity representing the Topic resource
+ *
  * @see #Topic(String, User)
  * @see #Topic(String, User, Topic)
  */
@@ -32,6 +33,7 @@ public class Topic {
     /**
      * Date the Topic was created, assigned by the server
      * before persisting the entity in the database. <br>
+     *
      * Date will be in the format E, dd/MMMM/yyyy, HH:mm:ss
      * @see #generateCreationDate()
      */
@@ -42,6 +44,7 @@ public class Topic {
     /**
      * State of the Topic, valid states are declared in
      * {@link TopicState}
+     *
      * @see TopicState
      */
     @Enumerated(EnumType.STRING)
@@ -50,6 +53,7 @@ public class Topic {
 
     /**
      * Sets the maximum allowed length of the Topic's name
+     *
      * @see #name
      */
     @Transient
@@ -57,6 +61,7 @@ public class Topic {
 
     /**
      * The name of the Topic <br>
+     *
      * Every Topic name is unique and cannot be null, blank, or exceed {@link #maximumNameLength}
      */
     @NotBlank
@@ -66,6 +71,7 @@ public class Topic {
 
     /**
      * Author of the Topic <br>
+     *
      * Many Topics can have the same Author <br>
      * Only one Author per Topic is allowed
      */
@@ -75,6 +81,7 @@ public class Topic {
 
     /**
      * Stories associated with the Topic <br>
+     *
      * Many Topics can be associated with the same Story <br>
      * Many Stories can be associated with the same Topic
      */
@@ -83,6 +90,7 @@ public class Topic {
 
     /**
      * List of Children Topics <br>
+     *
      * Each Topic can be a parent to other Topics
      */
     @OneToMany(mappedBy = "parentTopicID", targetEntity = Topic.class,
@@ -91,6 +99,7 @@ public class Topic {
 
     /**
      * Parent Topic of the Topic <br>
+     *
      * Each Topic can be associated with a single parent Topic
      */
     @ManyToOne(cascade = CascadeType.REFRESH, targetEntity = Topic.class)
@@ -117,6 +126,8 @@ public class Topic {
      * @param name Name of the Topic
      * @param author User that created the Topic
      * @param parentTopic Parent Topic that this Topic will be associated with
+     *
+     * @throws IllegalArgumentException If parent topic is null
      */
     public Topic(String name, User author, Topic parentTopic) {
         if (parentTopic != null) {
@@ -126,7 +137,7 @@ public class Topic {
             this.state = TopicState.SUBMITTED;
         }
         else {
-            throw new NullPointerException("Parent Topic cannot be null");
+            throw new IllegalArgumentException("Parent Topic cannot be null");
         }
     }
 
@@ -263,9 +274,7 @@ public class Topic {
      * @param newStory The Story that will be associated with this Topic
      */
     public void addStory(Story newStory) {
-
         storiesList.add(newStory);
-
     }
 
     /**
@@ -293,12 +302,12 @@ public class Topic {
      * from the child instead <br>
      *
      * @param childTopic The Topic that will be added as a child
-     * @throws RuntimeException When setting self as a child
+     * @throws IllegalArgumentException When setting self as a child
      */
     public void addChild(Topic childTopic) {
 
         if (Objects.equals(childTopic, this)) {
-            throw new RuntimeException("Cannot set self as child topic");
+            throw new IllegalArgumentException("Cannot set self as child topic");
         }
         this.topicsList.add(childTopic);
 
@@ -323,12 +332,12 @@ public class Topic {
      * Create an association between this child topic and a parent
      *
      * @param parentTopic The Topic that will server as parent
-     * @throws RuntimeException When setting self as a parent
+     * @throws IllegalArgumentException When setting self as a parent
      */
     public void setParent(Topic parentTopic) {
 
         if (Objects.equals(parentTopic, this)) {
-            throw new RuntimeException("Cannot set self as parent topic");
+            throw new IllegalArgumentException("Cannot set self as parent topic");
         }
 
         this.parentTopicID = parentTopic;
