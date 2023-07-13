@@ -9,6 +9,7 @@ import jakarta.validation.constraints.Size;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.Date;
+import java.util.Objects;
 import java.util.Optional;
 
 /**
@@ -87,7 +88,7 @@ public class Comment {
      * @throws RuntimeException If the provided Author is null
      */
     public Comment(Story storyID, String content, User authorID) {
-        if ( authorID == null ) { throw new RuntimeException("The Author you provided is null"); }
+        if ( authorID == null ) { throw new NullPointerException("The Author you provided is null"); }
 
         this.authorID = authorID;
         this.storyID = storyID;
@@ -128,12 +129,7 @@ public class Comment {
      * @throws RuntimeException If content is blank or null
      */
     public void setContent(String content) {
-        if ( content != null && !content.isBlank() && content.length() <= maxContentLength) {
-            this.content = content;
-        }
-        else {
-            throw new RuntimeException("Content cannot be null");
-        }
+        this.content = content;
     }
 
     /**
@@ -143,12 +139,7 @@ public class Comment {
      * @throws RuntimeException If the state is null
      */
     public void setState(CommentState state) {
-        if (state != null) {
-            this.state = state;
-        }
-        else {
-            throw new RuntimeException("State cannot be null");
-        }
+        this.state = state;
     }
 
     // GETTERS
@@ -208,5 +199,39 @@ public class Comment {
      */
     public Story getStory() {
         return this.storyID;
+    }
+
+    /**
+     * Create a Hash of an instantiated Comment
+     *
+     * @return A hash of the fields {@link #id}, {@link #authorID},
+     * {@link #creationDate}, {@link #state}
+     */
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, authorID, creationDate, state);
+    }
+
+    /**
+     * Check if this Comment and the specified object are equal <br><br>
+     *
+     * Two Comments are equal if their id's, authors, creation dates and states
+     * are equal
+     *
+     * @param obj The specified object to be compared with the Comment
+     * @return True or False, depending on the result of the comparison
+     */
+    @Override
+    public boolean equals(Object obj) {
+
+        if (obj instanceof Comment newComment) {
+            return Objects.equals(this.id, newComment.getId())
+                    && Objects.equals(this.authorID, newComment.getAuthor().get())
+                    && Objects.equals(this.creationDate, newComment.getCreationDate())
+                    && Objects.equals(this.state, newComment.getState());
+        }
+
+        return false;
+
     }
 }
