@@ -16,6 +16,7 @@ Java Spring Boot application that exposes a RESTful API servicing the day to day
 * RBAC with multiple users
 * Unit tests with JUnit
 * HATEOAS design
+* Hibernate ORM
 
 # Technology stack
 * Java 17

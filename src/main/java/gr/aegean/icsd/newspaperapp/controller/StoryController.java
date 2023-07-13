@@ -4,7 +4,6 @@ import gr.aegean.icsd.newspaperapp.model.entity.Story;
 import gr.aegean.icsd.newspaperapp.model.representation.story.StoryModel;
 import gr.aegean.icsd.newspaperapp.model.representation.story.StoryModelAssembler;
 import gr.aegean.icsd.newspaperapp.model.service.StoryService;
-import gr.aegean.icsd.newspaperapp.util.enums.SortType;
 import gr.aegean.icsd.newspaperapp.util.enums.StoryState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,11 +35,11 @@ public class StoryController {
      * the showAllStoriesForAStory method.
      * @see #showATopicsStories(long, int, int)
      */
-    private final String baseMapping = "/api/v0/stories";
+    private static final String baseMapping = "/api/v0/stories";
 
     /** Default size of the response page, <br> only applies to
      endpoints that include a page as their response */
-    private final String defaultPageSize = "10";
+    private static final String defaultPageSize = "10";
 
     /**
      * Sole constructor, never used implicitly <br>
