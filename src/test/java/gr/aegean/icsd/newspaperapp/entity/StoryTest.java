@@ -482,7 +482,7 @@ public class StoryTest {
             @DisplayName("Add null topic")
             public void addNullTopic() {
 
-                assertThrows(NullPointerException.class, () ->
+                assertThrows(IllegalArgumentException.class, () ->
                     story.addTopic(null),
                     "Exception should be thrown when associating with a null Topic"
                 );
