@@ -6,11 +6,14 @@ import gr.aegean.icsd.newspaperapp.model.entity.Topic;
 import gr.aegean.icsd.newspaperapp.model.entity.User;
 import gr.aegean.icsd.newspaperapp.util.enums.StoryState;
 import gr.aegean.icsd.newspaperapp.util.enums.UserType;
+import jakarta.validation.ConstraintViolationException;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -410,6 +413,49 @@ public class StoryTest {
             }
 
         }
+
+        @Test
+        @DisplayName("Set null state")
+        public void setNullState() {
+
+            story.setState(null);
+
+            assertNull(story.getState());
+
+            assertThrows(ConstraintViolationException.class, () ->
+                    entityManager.flush()
+            );
+
+            story = entityManager.refresh(story);
+
+            assertEquals(StoryState.CREATED, story.getState());
+
+        }
+
+        @ParameterizedTest
+        @DisplayName("Set invalid state")
+        @ValueSource(strings = {"", "   ", "invalidEnum"})
+        public void setInvalidState(String invalidState) {
+
+            assertThrows(RuntimeException.class, () -> {
+                story.setState(StoryState.valueOf(invalidState));
+                entityManager.flush();
+            });
+
+        }
+
+        @ParameterizedTest
+        @DisplayName("Set valid state")
+        @EnumSource(StoryState.class)
+        public void setValidState(StoryState testState) {
+
+            story.setState(testState);
+            entityManager.flush();
+
+            assertEquals(testState, story.getState());
+
+        }
+
 
     }
 

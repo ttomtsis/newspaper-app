@@ -9,6 +9,7 @@ import jakarta.validation.ConstraintViolationException;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -309,6 +310,48 @@ public class TopicTest {
                     entityManager.flush(),
                     "Hibernate Constraint Violation Exception should be thrown when a non unique name is set"
             );
+
+        }
+
+        @Test
+        @DisplayName("Set null state")
+        public void setNullState() {
+
+            mockTopic.setState(null);
+
+            assertNull(mockTopic.getState());
+
+            assertThrows(ConstraintViolationException.class, () ->
+                    entityManager.flush()
+            );
+
+            mockTopic = entityManager.refresh(mockTopic);
+
+            assertEquals(TopicState.SUBMITTED, mockTopic.getState());
+
+        }
+
+        @ParameterizedTest
+        @DisplayName("Set invalid state")
+        @ValueSource(strings = {"", "   ", "invalidEnum"})
+        public void setInvalidState(String invalidState) {
+
+            assertThrows(RuntimeException.class, () -> {
+                mockTopic.setState(TopicState.valueOf(invalidState));
+                entityManager.flush();
+            });
+
+        }
+
+        @ParameterizedTest
+        @DisplayName("Set valid state")
+        @EnumSource(TopicState.class)
+        public void setValidState(TopicState testState) {
+
+            mockTopic.setState(testState);
+            entityManager.flush();
+
+            assertEquals(testState, mockTopic.getState());
 
         }
 
