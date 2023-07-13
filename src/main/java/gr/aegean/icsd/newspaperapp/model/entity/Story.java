@@ -70,12 +70,30 @@ public class Story {
     private final int maximumRejectionReasonLength = 500;
 
     /**
+     * Sets the minimum allowed length of the Story's rejection reason
+     *
+     * @see #rejectionReason
+     */
+    @Transient
+    private final int minimumRejectionReasonLength = 5;
+
+    /**
      * Sets the maximum allowed length of the Story's content
      *
      * @see #content
      */
     @Transient
     private final int maximumContentLength = 500;
+
+    /**
+     * Sets the minimum allowed length of the Story's content <br>
+     *
+     * Should be scaled upwards when deploying to production
+     *
+     * @see #content
+     */
+    @Transient
+    private final int minimumContentLength = 5;
 
     /**
      * The name of the Story <br>
@@ -88,12 +106,12 @@ public class Story {
     private String name;
 
     /**
-     * Reason that a Story was rejected. <br>
+     * Reason that a Story was rejected <br>
      *
      * This field is not null IF AND ONLY IF a Story
      * has been rejected.
      */
-    @Size(max = maximumRejectionReasonLength)
+    @Size(min = minimumRejectionReasonLength, max = maximumRejectionReasonLength)
     private String rejectionReason;
 
     /**
@@ -101,7 +119,7 @@ public class Story {
      *
      * Content cannot be null, empty, or exceed {@link #maximumContentLength}
      */
-    @Size(max = maximumContentLength)
+    @Size(min = minimumContentLength,max = maximumContentLength)
     @NotBlank
     private String content;
 

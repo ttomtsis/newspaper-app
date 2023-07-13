@@ -14,8 +14,6 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
@@ -54,12 +52,10 @@ public class StoryTest {
 
     private Story story;
 
-    private final static Logger log = LoggerFactory.getLogger("### StoryTest ###");
-
     public StoryTest() {}
 
     @BeforeEach
-    protected void initialize() {
+    public void initialize() {
 
         author = new User("testName", "testPassword", UserType.CURATOR);
         topic = new Topic("testTopic", author);
@@ -72,8 +68,8 @@ public class StoryTest {
 
     }
 
-    private static String generateLargeString() {
-        return String.join("", Collections.nCopies(550, "a"));
+    private static String generateString(int size) {
+        return String.join("", Collections.nCopies(size, "a"));
     }
 
     @Nested
@@ -235,11 +231,13 @@ public class StoryTest {
                     arguments("", "validContent"),
                     arguments("   ", "validContent"),
                     arguments("testStory", "validContent"),
-                    arguments(generateLargeString(), "validContent" ),
+                    arguments(generateString(550), "validContent" ),
 
                     arguments("validName", null),
                     arguments("validName", ""),
-                    arguments("validName", "   ")
+                    arguments("validName", "   "),
+                    arguments("validName", generateString(550)),
+                    arguments("validName", generateString(2))
             );
         }
 
@@ -329,7 +327,7 @@ public class StoryTest {
                     "",
                     "    ",
                     "testStory",
-                    generateLargeString(),
+                    generateString(550),
                     "Valid String"
             );
         }
@@ -363,7 +361,8 @@ public class StoryTest {
                     null,
                     "",
                     "    ",
-                    generateLargeString(),
+                    generateString(550),
+                    generateString(2),
                     "Valid String"
             );
         }
@@ -397,7 +396,9 @@ public class StoryTest {
                     null,
                     "",
                     "    ",
-                    "Valid String"
+                    "Valid String",
+                    generateString(550),
+                    generateString(2)
             );
         }
 
