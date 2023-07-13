@@ -210,8 +210,9 @@ public class CommentTest {
         @DisplayName("Null Author")
         public void nullAuthor() {
 
-            assertThrows(NullPointerException.class, () -> {
+            assertThrows(IllegalArgumentException.class, () -> {
                 Comment testComment = new Comment(story, "validContent", null);
+                entityManager.persistAndFlush(testComment);
             },
                 "Null Pointer Exception should be thrown when Author is null");
 
