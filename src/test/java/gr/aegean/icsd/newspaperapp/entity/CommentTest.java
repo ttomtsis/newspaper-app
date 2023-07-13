@@ -146,6 +146,17 @@ public class CommentTest {
 
         }
 
+        @Test
+        @DisplayName("No parameters constructor")
+        public void constructorNoParameters() {
+
+            assertThrows(ConstraintViolationException.class, () -> {
+               Comment testComment = new Comment();
+               entityManager.persistAndFlush(testComment);
+            });
+
+        }
+
         @ParameterizedTest
         @MethodSource("gr.aegean.icsd.newspaperapp.entity.CommentTest#contentGenerator")
         @DisplayName("Invalid content")

@@ -194,6 +194,17 @@ public class StoryTest {
 
         }
 
+        @Test
+        @DisplayName("No parameters constructor")
+        public void constructorNoParameters() {
+
+            assertThrows(ConstraintViolationException.class, () -> {
+                Story testStory = new Story();
+                entityManager.persistAndFlush(testStory);
+            });
+
+        }
+
         @ParameterizedTest
         @MethodSource("invalidNameAndContentGenerator")
         @DisplayName("Invalid name and content")

@@ -155,6 +155,17 @@ public class TopicTest {
         }
 
         @Test
+        @DisplayName("No parameters constructor")
+        public void constructorNoParameters() {
+
+            assertThrows(ConstraintViolationException.class, () -> {
+                Topic testTopic = new Topic();
+                entityManager.persistAndFlush(testTopic);
+            });
+
+        }
+
+        @Test
         @DisplayName("Null Parent Topic")
         public void nullParentTopic() {
 
