@@ -82,13 +82,15 @@ public class Comment {
 
     /**
      * Constructor used when the Comment's Author is logged into the system
+     *
      * @param authorID ID of the Author
      * @param storyID ID of the Story this Comment belongs to
      * @param content Content of the Comment
+     *
      * @throws RuntimeException If the provided Author is null
      */
     public Comment(Story storyID, String content, User authorID) {
-        if ( authorID == null ) { throw new NullPointerException("The Author you provided is null"); }
+        if ( authorID == null ) { throw new IllegalArgumentException("The Author you provided is null"); }
 
         this.authorID = authorID;
         this.storyID = storyID;
@@ -99,6 +101,7 @@ public class Comment {
 
     /**
      * Constructor used when the Comment's Author is a Visitor
+     *
      * @param storyID ID of the Story this Comment belongs to
      * @param content Content of the Comment
      */
@@ -124,9 +127,10 @@ public class Comment {
 
     /**
      * Change the content of the comment <br>
+     *
      * New content must not be blank or exceed {@link #maxContentLength}
+     *
      * @param content New content
-     * @throws RuntimeException If content is blank or null
      */
     public void setContent(String content) {
         this.content = content;
@@ -134,9 +138,10 @@ public class Comment {
 
     /**
      * Change the state of the Comment <br>
+     *
      * Valid Comment states are defined in {@link CommentState}
+     *
      * @param state New state of the Comment
-     * @throws RuntimeException If the state is null
      */
     public void setState(CommentState state) {
         this.state = state;
@@ -146,7 +151,9 @@ public class Comment {
 
     /**
      * Get the id of the Comment <br>
+     *
      * Can be null if the Comment has not yet been persisted
+     *
      * @return {@link Comment#id} of the Comment
      */
     public Long getId() {
@@ -155,7 +162,9 @@ public class Comment {
 
     /**
      * Get the creationDate of the Comment <br>
+     *
      * Can be null if the Comment has not yet been persisted
+     *
      * @return {@link Comment#creationDate} of the Comment
      */
     public Date getCreationDate() {
@@ -164,7 +173,9 @@ public class Comment {
 
     /**
      * Get the content of the Comment <br>
+     *
      * Cannot be null or blank
+     *
      * @return {@link Comment#content} of the Comment
      */
     public String getContent() {
@@ -173,8 +184,10 @@ public class Comment {
 
     /**
      * Get the state of the Comment <br>
+     *
      * Cannot be null or blank, valid states are
      * defined in {@link CommentState}
+     *
      * @return {@link Comment#state} of the Comment
      */
     public CommentState getState() {
@@ -183,8 +196,10 @@ public class Comment {
 
     /**
      * Get the Author of the Comment <br>
+     *
      * Can be null if Comment was created by a visitor
      * @return {@link Comment#authorID} of the Comment
+     *
      * @see User
      */
     public Optional<User> getAuthor() {
@@ -193,7 +208,9 @@ public class Comment {
 
     /**
      * Get the Story associated with the Comment <br>
+     *
      * Cannot be null, all Comments are associated with a Story
+     *
      * @see Story
      * @return {@link Comment#storyID} of the Comment
      */
