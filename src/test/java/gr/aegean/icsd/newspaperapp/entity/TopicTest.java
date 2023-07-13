@@ -158,7 +158,7 @@ public class TopicTest {
         @DisplayName("Null Parent Topic")
         public void nullParentTopic() {
 
-            assertThrows(NullPointerException.class, () ->
+            assertThrows(IllegalArgumentException.class, () ->
                     entityManager.persist(new Topic("validName", mockAuthor, null)),
                     "Constraint Violation Exception should be thrown" +
                     "when parent topic is null"
