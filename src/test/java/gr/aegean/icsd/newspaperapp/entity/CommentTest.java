@@ -6,19 +6,23 @@ import gr.aegean.icsd.newspaperapp.model.entity.User;
 import gr.aegean.icsd.newspaperapp.util.enums.CommentState;
 import gr.aegean.icsd.newspaperapp.util.enums.UserType;
 import jakarta.validation.ConstraintViolationException;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
-import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Date;
+import java.util.Collections;
+import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -27,7 +31,8 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 @ExtendWith(SpringExtension.class)
 @DataJpaTest
-@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
+@Transactional
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 public class CommentTest {
 
@@ -38,379 +43,376 @@ public class CommentTest {
 
     private User author;
 
+    private Comment comment;
+
     private final static Logger log = LoggerFactory.getLogger("### CommentTest ###");
 
-    public CommentTest() {
-        log.info("Initializing Comment Entity Tests...");
-    }
+    public CommentTest() {}
 
-    /**
-     * Create a Story and a User before every test
-     */
     @BeforeEach
-    protected void initialize() {
+    public void initialize() {
+
         author = new User("testName", "testPassword", UserType.CURATOR);
         story = new Story("testStory", author, "testContent");
+        comment = new Comment(story, "validContent", author);
 
         entityManager.persist(author);
         entityManager.persist(story);
+        entityManager.persist(comment);
         entityManager.flush();
-
-        log.info("Author and Story created with authorID: " + this.author.getId() + " and storyID: " + this.story.getId());
-    }
-
-    /**
-     * Test case - EC1 <br>
-     * Check if comment has valid behaviour, for valid parameters
-     */
-    @Test
-    public void testValidBehaviour() {
-
-        log.info("Testing scenario: Create valid Comment with no Author provided");
-        Comment noAuthorTestComment = new Comment(story,"test");
-        entityManager.persist(noAuthorTestComment);
-        entityManager.flush();
-
-        assertNotNull(entityManager.find(Comment.class, noAuthorTestComment.getId()));
-
-        log.info("Testing scenario: Create valid Comment with no Author provided");
-        Comment AuthorTestComment = new Comment(story,"test", author);
-        entityManager.persist(AuthorTestComment);
-        entityManager.flush();
-
-        assertNotNull(entityManager.find(Comment.class, AuthorTestComment.getId()));
 
     }
 
-    /**
-     * Test case - EC2 <br>
-     * Check if comment can be created with constraint violating
-     * parameters
-     */
-    @Test
-    public void testCommentCreation() {
+    private static String generateLargeString() {
+        return String.join("", Collections.nCopies(550, "a"));
+    }
 
-        log.info("Testing scenario: Create Comment without providing any of the required fields");
-        assertThrows(ConstraintViolationException.class, () -> entityManager.persist(new Comment()));
+    private static Stream<String> contentGenerator() {
+        return Stream.of(
+                null,
+                "",
+                "    ",
+                generateLargeString()
+        );
+    }
 
-        log.info("Testing scenario: Create Comment with empty content");
-        assertThrows(ConstraintViolationException.class, () -> entityManager.persist(new Comment(story, "")));
 
-        log.info("Testing scenario: Create Comment with null Content");
-        assertThrows(ConstraintViolationException.class, () -> entityManager.persist(new Comment(story, null)));
+    @Nested
+    @DisplayName("Constructor Tests")
+    @Tag("Constructor")
+    class constructorTests {
 
-        log.info("Testing scenario: Create Comment with whitespace Content");
-        assertThrows(ConstraintViolationException.class, () -> entityManager.persist(new Comment(story, "   ")));
+        @Test
+        @DisplayName("Constructor Story, String, User - Valid parameters")
+        public void constructorStoryStrUserValid() {
 
-        log.info("Testing scenario: Create Comment with null Story");
-        assertThrows(org.hibernate.exception.ConstraintViolationException.class, () -> entityManager.persist(new Comment(null, "test")));
+            Comment testComment = new Comment(story, "validContent", author);
 
-        log.info("Testing scenario: Create Comment with non-existing Story");
-        assertThrows(IllegalStateException.class, () -> entityManager.persist(new Comment(new Story(), "test")));
+            assertAll(
+                    () -> assertNull(testComment.getId(),
+                            "ID should be null before persisting"),
 
-        log.info("Testing scenario: Create Comment with null Author");
-        assertThrows(RuntimeException.class, () -> entityManager.persist(new Comment(story, "test", null)));
+                    () -> assertNull(testComment.getCreationDate(),
+                            "Creation date should be null before persisting"),
 
-        log.info("Testing scenario: Create Comment with non-existing Author");
-        assertThrows(IllegalStateException.class, () -> entityManager.persist(new Comment(new Story(), "test", new User())));
+                    () -> assertEquals(CommentState.SUBMITTED, testComment.getState(),
+                            "State should be SUBMITTED before persisting")
+            );
+
+            entityManager.persistAndFlush(testComment);
+
+            assertAll(
+                    () -> assertNotNull(testComment.getId(),
+                            "ID should not be null after persisting"),
+
+                    () -> assertNotNull(testComment.getCreationDate(),
+                            "Creation date should not be null after persisting"),
+
+                    () -> assertEquals(CommentState.SUBMITTED, testComment.getState(),
+                            "State should be SUBMITTED after persisting")
+            );
+
+        }
+
+        @Test
+        @DisplayName("Constructor Story, String - Valid parameters")
+        public void constructorStoryStrValid() {
+
+            Comment testComment = new Comment(story, "validContent");
+
+            assertAll(
+                    () -> assertNull(testComment.getId(),
+                            "ID should be null before persisting"),
+
+                    () -> assertNull(testComment.getCreationDate(),
+                            "Creation date should be null before persisting"),
+
+                    () -> assertEquals(CommentState.SUBMITTED, testComment.getState(),
+                            "State should be SUBMITTED before persisting")
+            );
+
+            entityManager.persistAndFlush(testComment);
+
+            assertAll(
+                    () -> assertNotNull(testComment.getId(),
+                            "ID should not be null after persisting"),
+
+                    () -> assertNotNull(testComment.getCreationDate(),
+                            "Creation date should not be null after persisting"),
+
+                    () -> assertEquals(CommentState.SUBMITTED, testComment.getState(),
+                            "State should be SUBMITTED after persisting")
+            );
+
+        }
+
+        @ParameterizedTest
+        @MethodSource("gr.aegean.icsd.newspaperapp.entity.CommentTest#contentGenerator")
+        @DisplayName("Invalid content")
+        public void invalidContent(String content) {
+
+            Comment testCommentConstructor1 = new Comment(story, content, author);
+            Comment testCommentConstructor2 = new Comment(story, content);
+
+            assertAll(
+                    () -> assertThrows(ConstraintViolationException.class, () ->
+                            entityManager.persist(testCommentConstructor1),
+                            "Constraint Violation Exception should be thrown when content is " + content),
+
+                    () -> assertThrows(ConstraintViolationException.class, () ->
+                                    entityManager.persist(testCommentConstructor2),
+                            "Constraint Violation Exception should be thrown when content is " + content)
+            );
+
+        }
+
+        @Test
+        @DisplayName("Null Story")
+        public void nullStory() {
+
+            Comment testCommentConstructor1 = new Comment(null, "validContent");
+            Comment testCommentConstructor2 = new Comment(null, "validContent", author);
+
+            assertAll(
+                    () -> assertThrows(org.hibernate.exception.ConstraintViolationException.class, () ->
+                                    entityManager.persist(testCommentConstructor1),
+                            "Constraint Violation Exception should be thrown when Story is null"),
+
+                    () -> assertThrows(org.hibernate.exception.ConstraintViolationException.class, () ->
+                                    entityManager.persist(testCommentConstructor2),
+                            "Constraint Violation Exception should be thrown when Story is null")
+            );
+
+        }
+
+        @Test
+        @DisplayName("Non-Existing Story")
+        public void nonExistingStory() {
+
+            Story nonExistingStory = new Story("nonExistingStory", author, "validContent");
+
+            Comment testCommentConstructor1 = new Comment(nonExistingStory, "validContent");
+            Comment testCommentConstructor2 = new Comment(nonExistingStory, "validContent", author);
+
+            assertAll(
+                    () -> assertThrows(IllegalStateException.class, () ->
+                                    entityManager.persist(testCommentConstructor1),
+                            "Illegal State Exception should be thrown when Story does not exist"),
+
+                    () -> assertThrows(IllegalStateException.class, () ->
+                                    entityManager.persist(testCommentConstructor2),
+                            "Illegal State Exception should be thrown when Story does not exist")
+            );
+
+        }
+
+        @Test
+        @DisplayName("Null Author")
+        public void nullAuthor() {
+
+            assertThrows(NullPointerException.class, () -> {
+                Comment testComment = new Comment(story, "validContent", null);
+            },
+                "Null Pointer Exception should be thrown when Author is null");
+
+        }
+
+        @Test
+        @DisplayName("Non-Existing Author")
+        public void nonExistingAuthor() {
+
+            User nonExistingAuthor = new User("nonExistingAuthor", "password", UserType.CURATOR);
+
+            Comment testComment = new Comment(story, "validContent", nonExistingAuthor);
+
+            assertThrows(IllegalStateException.class, () ->
+                            entityManager.persistAndFlush(testComment),
+                    "Illegal State Exception should be thrown when Author does not exist");
+
+        }
 
     }
 
-    /**
-     * Test case - EC3 <br>
-     * Check if comment method setContent works appropriately
-     */
-    @Test
-    public void testSetContent() {
 
-        Comment testComment = new Comment(story, "test");
-        entityManager.persist(testComment);
-        entityManager.flush();
+    @Nested
+    @DisplayName("Setter Method tests")
+    @Tag("SetterMethods")
+    class setterTests {
 
-        log.info("Testing scenario: setContent with null content)");
-        assertThrows(RuntimeException.class, () -> testComment.setContent(null));
+        @ParameterizedTest
+        @MethodSource("gr.aegean.icsd.newspaperapp.entity.CommentTest#contentGenerator")
+        @DisplayName("Set invalid content test")
+        public void setInvalidContent(String newContent) {
 
+            Comment testComment = new Comment(story, "validContent");
+            entityManager.persist(testComment);
 
-        log.info("Testing scenario: setContent with empty content");
-        assertThrows(RuntimeException.class, () -> testComment.setContent(""));
+            testComment.setContent(newContent);
 
-        log.info("Testing scenario: setContent with whitespace content");
-        assertThrows(RuntimeException.class, () -> testComment.setContent("   "));
+            assertThrows(ConstraintViolationException.class, () ->
+                    entityManager.flush(),
+                    "Constraint Violation Exception should be thrown when content is: " + newContent);
 
-    }
+        }
 
-    /**
-     * Test case - EC4 <br>
-     * Check if comment method setState works appropriately
-     */
-    @Test
-    public void testSetState() {
+        @ParameterizedTest
+        @MethodSource("gr.aegean.icsd.newspaperapp.entity.CommentTest#contentGenerator")
+        @DisplayName("Set valid content test")
+        public void setValidContent() {
 
-        Comment testComment = new Comment(story, "test");
-        entityManager.persist(testComment);
-        entityManager.flush();
+            Comment testComment = new Comment(story, "validContent");
+            entityManager.persist(testComment);
 
-        log.info("Testing scenario: setState with null state)");
-        assertThrows(RuntimeException.class, () -> testComment.setState(null));
+            testComment.setContent("New validContent");
+            entityManager.flush();
 
+            assertEquals("New validContent", testComment.getContent(),
+                    "Content should have been updated")
+            ;
 
-        log.info("Testing scenario: setState with empty state");
-        assertThrows(IllegalArgumentException.class, () -> testComment.setState(CommentState.valueOf("")));
+        }
 
-        log.info("Testing scenario: setContent with invalid state");
-        assertThrows(IllegalArgumentException.class, () -> testComment.setState(CommentState.valueOf("Test")));
+        @Test
+        @DisplayName("Set null state")
+        public void setNullState() {
 
-    }
+            comment.setState(null);
 
-    /**
-     * Test case - EC5 <br>
-     * Check if deleting a comment affects the parent Story entity
-     */
-    @Test
-    public void testOnDeleteCommentCascade() {
+            assertNull(comment.getState());
 
-        Comment testComment = new Comment(story, "test");
-        entityManager.persist(testComment);
-        entityManager.flush();
+            assertThrows(ConstraintViolationException.class, () ->
+                    entityManager.flush()
+            );
 
-        entityManager.remove(testComment);
-        entityManager.flush();
+            comment = entityManager.refresh(comment);
 
-        Story result = entityManager.find(Story.class, story.getId());
-        assertNotNull(result);
+            assertEquals(CommentState.SUBMITTED, comment.getState());
 
-    }
+        }
 
-    /**
-     * Test case - EC6 <br>
-     * Check if the generated values are generated properly after persistence
-     */
-    @Test
-    public void testGeneratedValues() {
+        @ParameterizedTest
+        @DisplayName("Set invalid state")
+        @ValueSource(strings = {"", "   ", "invalidEnum"})
+        public void setInvalidState(String invalidState) {
 
-        Comment testComment = new Comment(story, "test");
+            assertThrows(RuntimeException.class, () -> {
+                comment.setState(CommentState.valueOf(invalidState));
+                entityManager.flush();
+            });
 
-        assertNull(testComment.getId());
-        assertNull(testComment.getCreationDate());
-        assertEquals(CommentState.SUBMITTED, testComment.getState());
+        }
 
-        entityManager.persist(testComment);
-        entityManager.flush();
+        @ParameterizedTest
+        @DisplayName("Set valid state")
+        @EnumSource(CommentState.class)
+        public void setValidState(CommentState testState) {
 
-        long testCommentID = testComment.getId();
-        Date testCommentDate = testComment.getCreationDate();
-        CommentState testCommentState = testComment.getState();
+            comment.setState(testState);
+            entityManager.flush();
 
-        assertNotNull(testCommentID);
-        assertNotNull(testCommentDate);
-        assertEquals(CommentState.SUBMITTED, testCommentState);
+            assertEquals(testState, comment.getState());
+
+        }
 
     }
 
-    /**
-     * Test case - EC7 <br>
-     * Check if deleting a story deletes associated comments
-     */
-    @Test
-    public void testDeleteStory() {
 
-        Comment testComment = new Comment(story, "test");
-        entityManager.persist(testComment);
-        entityManager.flush();
+    @Nested
+    @DisplayName("Association tests")
+    @Tag("Association")
+    class associationTests {
 
-        /*
-         * Since the same Entity Manager and Persistence contexts are used,
-         * the Story residing in the Persistence Context needs to be refreshed by the manager
-         * in order to correctly associate the new Comment with the Story in the persistence context
-         */
-        entityManager.refresh(story);
+        @Test
+        @DisplayName("Associate Comment with a Story and Author")
+        public void createAssociation() {
 
-        long testCommentID = testComment.getId();
-        long storyID = story.getId();
+            Comment testComment = new Comment(story, "validContent", author);
+            entityManager.persistAndFlush(testComment);
 
-        /*
-         * Since the same Entity Manager is used, the Persistence Context
-         * needs to be refreshed by the manager
-         * in order to reflect the changes made by the previous flush.
-         * To achieve this the context is cleared to remove all entities
-         * and then forced to add them anew using entityManager.find()
-         *
-         * This action simulates the following behaviour:
-         *
-         * 1) User A creates a new Transaction, associated with a new persistent
-         * context and Entity Manager, to delete a Story in the database
-         * 2) User A commits the Transaction and the persistence context is flushed,
-         * deleting the Story Entity and all associated Comments from the database
-         * 3) User B creates a new Transaction, searching for the Comment that
-         * was previously deleted.
-         */
-        entityManager.remove(story);
-        entityManager.flush();
-        entityManager.clear();
+            story = entityManager.refresh(story);
+            author = entityManager.refresh(author);
 
-        assertNull(entityManager.find(Story.class, storyID));
-        assertNull(entityManager.find(Comment.class, testCommentID));
+            assertAll(
+                    () -> assertEquals(story, testComment.getStory(),
+                            "Comment should have been associated with the Comment"),
 
-    }
+                    () -> assertTrue(story.getComments().contains(testComment),
+                            "Story should have been associated with the Comment"),
 
-    /**
-     * Test case - EC8 <br>
-     * Check whether upon deletion of a User the associated Comments are
-     * deleted as well
-     */
-    @Test
-    public void testDeleteUser() {
-        Comment testComment = new Comment(story, "test", author);
-        entityManager.persist(testComment);
-        entityManager.flush();
+                    () -> assertEquals(2, story.getComments().size(),
+                            "Story should have been associated with both Comments"),
 
-        /*
-         * NOTE: When referring to 'Author' below, it should be translated as the User Entity.
-         * No Author entity exists.
-         *
-         * Since the same Entity Manager and Persistence contexts are used,
-         * the Author residing in the Persistence Context needs to be refreshed by the manager
-         * in order to correctly associate the new Comment with the Author in the persistence context
-         */
-        entityManager.refresh(author);
+                    () -> assertTrue(author.getComments().contains(testComment),
+                            "Author should have been associated with the Comment"),
 
-        long testCommentID = testComment.getId();
-        long authorID = author.getId();
+                    () -> assertEquals(2, author.getComments().size(),
+                            "Author should have been associated with both Comments")
+            );
 
-        /*
-         * Since the same Entity Manager is used, the Persistence Context
-         * needs to be refreshed by the manager
-         * in order to reflect the changes made by the previous flush.
-         * To achieve this the context is cleared to remove all entities
-         * and then forced to add them anew using entityManager.find()
-         *
-         * This action simulates the following behaviour:
-         *
-         * 1) User A creates a new Transaction, associated with a new persistent
-         * context and Entity Manager, to delete an Author in the database
-         * 2) User A commits the Transaction and the persistence context is flushed,
-         * deleting the Author Entity and all associated Comments from the database
-         * 3) User B creates a new Transaction, searching for the Comment that
-         * was previously deleted.
-         */
-        entityManager.remove(author);
-        entityManager.flush();
-        entityManager.clear();
+        }
 
-        assertNull(entityManager.find(User.class, authorID));
-        assertNull(entityManager.find(Comment.class, testCommentID));
-    }
+        @Test
+        @Tag("Cascade")
+        @DisplayName("On Delete Comment, Cascade Test")
+        public void deleteComment() {
 
-    /**
-     * Test case - EC9 <br>
-     * Check if upon update of a Comment's content, the change is reflected
-     * in the Story
-     */
-    @Test
-    public void testUpdateStoryCommentList() {
+            Comment testComment = new Comment(story, "validContent", author);
+            entityManager.persistAndFlush(testComment);
 
-        Comment testComment = new Comment(story, "test");
-        entityManager.persist(testComment);
-        entityManager.flush();
+            story = entityManager.refresh(story);
+            author = entityManager.refresh(author);
 
-        /*
-        * Since the same Entity Manager is used, the Story residing in the
-        * Persistence Context needs to be refreshed by the manager
-        * in order to reflect the changes made by the previous flush.
-        *
-        * This action simulates the following behaviour:
-        *
-        * 1) User A creates a new Transaction, associated with a new persistent
-        * context and Entity Manager, to save a Comment in the database
-        * 2) User A commits the Transaction and the persistence context is flushed,
-        * saving the new Comment Entity in the database
-        * 3) User B creates a new Transaction, fetching all the Comments
-        * associated with a Story, including the Comment User A created.
-        */
-        entityManager.refresh(story);
+            entityManager.remove(testComment);
+            entityManager.flush();
 
-        assertTrue(story.getComments().contains(testComment));
+            entityManager.clear();
+            story = entityManager.find(Story.class, story.getId());
+            author = entityManager.find(User.class, author.getId());
 
-        /*
-        * The Comment's content field is updated, since the Story and the Comment
-        * now share an association in the persistence context, as well as in the database,
-        * it is not necessary to refresh the Story again.
-        */
-        testComment.setContent("new content");
-        entityManager.flush();
+            assertAll(
+                    () -> assertNull(entityManager.find(Comment.class, testComment.getId()),
+                            "Comment should have been deleted"),
 
-        assertEquals("new content",testComment.getContent());
-        assertEquals("new content",story.getComments().stream().toList().get(0).getContent());
+                    () -> assertNotNull(entityManager.find(Story.class, story.getId()),
+                            "Story shouldn't have been deleted"),
+
+                    () -> assertNotNull(entityManager.find(User.class, author.getId()),
+                            "User shouldn't have been deleted"),
+
+                    () -> assertEquals(1, story.getComments().size(),
+                            "Story should no longer be associated with the Comment"),
+
+                    () -> assertEquals(1, author.getComments().size(),
+                            "Author should no longer be associated with the Comment")
+            );
+
+        }
+
+        @Test
+        @Tag("Cascade")
+        @DisplayName("On Update Comment, Cascade Test")
+        public void updateComment() {
+
+            comment.setContent("New Valid Content");
+            entityManager.flush();
+
+            story = entityManager.refresh(story);
+            author = entityManager.refresh(author);
+
+            assertAll(
+                    () -> assertEquals("New Valid Content", comment.getContent(),
+                            "Content should have been updated"),
+
+                    () -> assertEquals("New Valid Content", story.getComments().stream().toList().get(0).getContent(),
+                            "Updated content should be reflected in the Story's Comment"),
+
+                    () -> assertEquals("New Valid Content", author.getComments().stream().toList().get(0).getContent(),
+                            "Updated content should be reflected in the User's Comment")
+            );
+
+        }
 
     }
 
-    /**
-     * Test case - EC10 <br>
-     * Check if setContent and setState function as expected with valid parameters
-     */
-    @Test
-    public void testValidSetStateSetContent() {
-
-        Comment testComment = new Comment(story, "test");
-        entityManager.persist(testComment);
-        entityManager.flush();
-        entityManager.clear();
-
-        testComment.setContent("test content");
-        testComment.setState(CommentState.APPROVED);
-        entityManager.flush();
-        entityManager.clear();
-
-        assertEquals("test content", testComment.getContent());
-        assertEquals(CommentState.APPROVED, testComment.getState());
-
-    }
-
-    /**
-     * Test case - EC11 <br>
-     * Check if a Comment's content can be greater than maximum length <br>
-     * Also checks if setContent can violate the above constraint
-     */
-    @Test
-    public void testCreateCommentWithLargeContent() {
-        String largeContent = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. " +
-                "Nam euismod, tortor nec pharetra ultricies, ante erat imperdiet velit, nec" +
-                " laoreet enim lacus a velit. Nam elementum ullamcorper orci, ac porttitor velit" +
-                " commodo ut. Sed quis nisl elementum, bibendum est at, porta erat. In hac habitasse" +
-                " platea dictumst. Vivamus eget nibh id lacus mollis placerat. Nulla facilisi. Donec lacinia" +
-                " congue felis in faucibus. Nunc non tincidunt neque, eu ultrices arcu. Praesent vel" +
-                "congue felis in faucibus. Nunc non tincidunt neque, eu ultrices arcu. Praesent vel" +
-                "congue felis in faucibus. Nunc non tincidunt neque, eu ultrices arcu. Praesent vel" +
-                "congue felis in faucibus. Nunc non tincidunt neque, eu ultrices arcu. Praesent vel.";
-
-        assertThrows(ConstraintViolationException.class, () -> entityManager.persist(new Comment(story,largeContent)));
-
-        entityManager.clear();
-
-        Comment testComment = new Comment(story, "test");
-        entityManager.persist(testComment);
-        entityManager.flush();
-
-        assertThrows(RuntimeException.class, () -> testComment.setContent(largeContent));
-
-    }
-
-    /**
-     * Test case - EC12 <br>
-     * Check if updating a Story is reflected in the associated Comments <br>
-     */
-    @Test
-    public void testUpdateStoryUpdateComment() {
-        Comment testComment = new Comment(story, "test");
-        entityManager.persist(testComment);
-        entityManager.flush();
-
-        story.setName("Altered name");
-        entityManager.flush();
-
-        entityManager.refresh(testComment);
-
-        assertEquals("Altered name", testComment.getStory().getName());
-    }
 
 }
