@@ -353,6 +353,17 @@ public class Story {
         }
     }
 
+    /**
+     * Change the state of the Story <br>
+     *
+     * Valid Story states are defined in {@link StoryState}
+     *
+     * @param newState New state of the Story
+     */
+    public void setState(StoryState newState) {
+        this.state = newState;
+    }
+
     // UTILITY
 
     /**

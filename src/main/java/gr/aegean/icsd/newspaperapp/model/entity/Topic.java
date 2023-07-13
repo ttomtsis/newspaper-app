@@ -238,6 +238,17 @@ public class Topic {
         this.name = newName;
     }
 
+    /**
+     * Change the state of the Topic <br>
+     *
+     * Valid Topic states are defined in {@link TopicState}
+     *
+     * @param newState New state of the Topic
+     */
+    public void setState(TopicState newState) {
+        this.state = newState;
+    }
+
     // UTILITY
 
     /**
