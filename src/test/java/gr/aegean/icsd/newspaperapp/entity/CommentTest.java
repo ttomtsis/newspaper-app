@@ -332,18 +332,19 @@ public class CommentTest {
 
             story = entityManager.refresh(story);
             author = entityManager.refresh(author);
+            Comment refreshedTestComment = entityManager.refresh(testComment);
 
             assertAll(
-                    () -> assertEquals(story, testComment.getStory(),
-                            "Comment should have been associated with the Comment"),
+                    () -> assertEquals(story, refreshedTestComment.getStory(),
+                            "Story should have been associated with the Comment"),
 
-                    () -> assertTrue(story.getComments().contains(testComment),
+                    () -> assertTrue(story.getComments().contains(refreshedTestComment),
                             "Story should have been associated with the Comment"),
 
                     () -> assertEquals(2, story.getComments().size(),
                             "Story should have been associated with both Comments"),
 
-                    () -> assertTrue(author.getComments().contains(testComment),
+                    () -> assertTrue(author.getComments().contains(refreshedTestComment),
                             "Author should have been associated with the Comment"),
 
                     () -> assertEquals(2, author.getComments().size(),
