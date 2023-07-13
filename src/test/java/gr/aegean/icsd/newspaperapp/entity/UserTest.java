@@ -1,8 +1,5 @@
 package gr.aegean.icsd.newspaperapp.entity;
 
-import gr.aegean.icsd.newspaperapp.model.entity.Comment;
-import gr.aegean.icsd.newspaperapp.model.entity.Story;
-import gr.aegean.icsd.newspaperapp.model.entity.Topic;
 import gr.aegean.icsd.newspaperapp.model.entity.User;
 import gr.aegean.icsd.newspaperapp.util.enums.UserType;
 import jakarta.validation.ConstraintViolationException;
@@ -145,86 +142,6 @@ public class UserTest {
                 User testUser = new User("validUsername", "validPassword", UserType.valueOf(role));
                 entityManager.persistAndFlush(testUser);
             });
-
-        }
-
-    }
-
-
-    @Nested
-    @DisplayName("Association Tests")
-    @Tag("Association")
-    @Disabled
-    class associationTests {
-
-        @Test
-        @Tag("Cascade")
-        @DisplayName("On Delete User Cascade")
-        public void onDeleteUserCascade() {
-
-            User testUser = new User("authorName", "validPassword", UserType.CURATOR);
-
-            Story testStory = new Story("storyName", testUser, "content");
-            Topic testTopic = new Topic("topicName", testUser);
-            Comment testComment = new Comment(testStory, "validContent", testUser);
-
-            entityManager.persist(testUser);
-            entityManager.persist(testStory);
-            entityManager.persist(testTopic);
-            entityManager.persist(testComment);
-
-            entityManager.flush();
-
-            User refreshedTestUser = entityManager.refresh(testUser);
-            Story refreshedTestStory = entityManager.refresh(testStory);
-            Topic refreshedtestTopic = entityManager.refresh(testTopic);
-            Comment refreshedtestComment = entityManager.refresh(testComment);
-
-            // Ensure relationships exist
-            assertAll(
-                    () -> assertTrue(refreshedTestUser.getComments().contains(refreshedtestComment),
-                            "User should be associated with the Comment"),
-
-                    () -> assertTrue(refreshedTestUser.getStories().contains(refreshedTestStory),
-                            "User should be associated with the Story"),
-
-                    () -> assertTrue(refreshedTestUser.getTopics().contains(refreshedtestTopic),
-                            "User should be associated with the Topic"),
-
-                    () -> assertEquals(refreshedTestUser, refreshedTestStory.getAuthor(),
-                            "Story should be associated with the User"),
-
-                    () -> assertEquals(refreshedTestUser, refreshedtestTopic.getAuthor(),
-                    "Topic should be associated with the User"),
-
-                    () -> assertEquals(refreshedTestUser, refreshedtestComment.getAuthor().get(),
-                            "Comment should be associated with the User")
-            );
-
-            entityManager.remove(testUser);
-            entityManager.flush();
-
-            entityManager.clear();
-
-            assertAll(
-                    () -> assertNull(entityManager.find(User.class, testUser.getId()),
-                            "User should not exist"),
-
-                    () -> assertNotNull(entityManager.find(Story.class, testStory.getId()),
-                            "Story shouldn't be deleted"),
-
-                    () -> assertNotNull(entityManager.find(Topic.class, testTopic.getId()),
-                            "Topic shouldn't be deleted"),
-
-                    () -> assertNull(entityManager.find(Comment.class, testComment.getId()),
-                            "Comment should not exist"),
-
-                    () -> assertNull(entityManager.find(Story.class, testStory.getId()).getAuthor(),
-                            "Story's Author should be null"),
-
-                    () -> assertNull(entityManager.find(Topic.class, testTopic.getId()).getAuthor(),
-                            "Topic's Author should be null")
-            );
 
         }
 
