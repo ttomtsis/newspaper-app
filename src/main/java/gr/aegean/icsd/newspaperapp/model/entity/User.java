@@ -5,7 +5,12 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+import jdk.jfr.BooleanFlag;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
@@ -16,15 +21,8 @@ import java.util.Set;
  * @see #User(String, String, UserType)
  */
 @Entity
-@Table(name = "user")
-public class User {
-
-    /**
-     * Primary Key of the User Entity
-     */
-    @Id
-    @GeneratedValue
-    private Long id;
+@Table(name = "users")
+public class User implements UserDetails {
 
     /**
      * Sets the maximum allowed length of the User's username
@@ -32,7 +30,7 @@ public class User {
      * @see #username
      */
     @Transient
-    private final int maximumUsernameLength = 20;
+    private final int maximumUsernameLength = 50;
 
     /**
      * Sets the minimum allowed length of the User's username
@@ -51,33 +49,75 @@ public class User {
     private final int minimumPasswordLength = 5;
 
     /**
-     * The username used in order to login to the News server <br>
+     * Sets the maximum allowed length of the User's password <br>
+     *
+     * Equal to the maximum varchar size MySQL can accommodate ( 255 )
+     *
+     * @see #password
+     */
+    @Transient
+    private final int maximumPasswordLength = 255;
+
+    /**
+     * The username used in order to log in to the News server <br>
      *
      * Each username must be unique and conform to specific length standards
      */
+    @Id
     @NotBlank
     @Size(min = minimumUsernameLength, max = maximumUsernameLength)
-    @Column(unique = true, nullable = false)
+    @Column(unique = true, nullable = false, name = "username")
     private String username;
 
     /**
-     * The password used in order to login to the News server <br>
+     * The password used in order to log in to the News server <br>
      */
     @NotBlank
-    @Size(min = minimumPasswordLength)
-    @Column(nullable = false)
+    @Size(min = minimumPasswordLength, max = maximumPasswordLength)
+    @Column(nullable = false, name = "password")
     private String password;
 
     /**
-     * The role of the User in the News Server <br>
-     *
-     * Valid User roles are specified in {@link UserType}
-     *
-     * @see UserType
+     * Boolean flag setting whether the User's account is enabled or not
      */
-    @Enumerated(EnumType.STRING)
+    @BooleanFlag
     @NotNull
-    private UserType role;
+    @Column(nullable = false, name = "enabled")
+    private boolean accountEnabled;
+
+    /**
+     * Boolean flag setting whether the User's account has expired or not
+     */
+    @BooleanFlag
+    @NotNull
+    @Column(name = "account_non_expired", columnDefinition = "BOOLEAN DEFAULT TRUE")
+    private boolean accountNonExpired;
+
+    /**
+     * Boolean flag setting whether the User's account has been locked or not
+     */
+    @BooleanFlag
+    @NotNull
+    @Column(name = "account_non_locked", columnDefinition = "BOOLEAN DEFAULT TRUE")
+    private boolean accountNonLocked;
+
+    /**
+     * Boolean flag setting whether the User's credentials have expired or not
+     */
+    @BooleanFlag
+    @NotNull
+    @Column(name = "credentials_non_expired", columnDefinition = "BOOLEAN DEFAULT TRUE")
+    private boolean credentialsNonExpired;
+
+    /**
+     * Authorities and Roles granted to this User <br>
+     *
+     * Valid Roles for Users are specified in {@link UserType}
+     */
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "authorities", joinColumns = @JoinColumn(name = "username"))
+    @Column(name = "authority")
+    private final Set<GrantedAuthority> authorities = new HashSet<>();
 
     /**
      * Comments associated with the User <br>
@@ -107,26 +147,21 @@ public class User {
      * User constructor, used to create User entities that will be persisted
      * in the database <br>
      *
-     * @param username Username that will be used to login
-     * @param password Password that will be used to login
+     * @param username Username that will be used to log in
+     * @param password Password that will be used to log in
      * @param role Role a User is going to have in the system
      */
     public User(String username, String password, UserType role) {
         this.username = username;
         this.password = password;
-        this.role = role;
+        this.accountEnabled = true;
+
+        String userRole = "ROLE_" + role.toString();
+        authorities.add(new SimpleGrantedAuthority(userRole));
     }
 
     public User() {}
 
-    /**
-     * Get the id of the User <br>
-     *
-     * @return {@link User#id} of the User
-     */
-    public Long getId() {
-        return this.id;
-    }
 
     /**
      * Get the username of the User <br>
@@ -146,14 +181,31 @@ public class User {
         return this.password;
     }
 
-    /**
-     * Get the role of the User <br>
-     *
-     * @return {@link User#role} of the User
-     */
-    public UserType getRole() {
-        return this.role;
+    @Override
+    public boolean isAccountNonExpired() {
+        return this.accountNonExpired;
     }
+
+    @Override
+    public boolean isAccountNonLocked() {
+        return this.accountNonLocked;
+    }
+
+    @Override
+    public boolean isCredentialsNonExpired() {
+        return this.credentialsNonExpired;
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return this.accountEnabled;
+    }
+
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        return this.authorities;
+    }
+
 
     /**
      * Get the Comments associated with the User <br>
@@ -185,19 +237,19 @@ public class User {
     /**
      * Create a Hash of an instantiated User
      *
-     * @return A hash of the fields {@link #id}, {@link #username},
-     * {@link #password}, {@link  #role}
+     * @return A hash of the fields {@link #username},
+     * {@link #password}, {@link  #authorities}
      */
     @Override
     public int hashCode() {
-        return Objects.hash(id, username, password, role);
+        return Objects.hash(username, password, authorities);
     }
 
     /**
      * Check if this User and the specified object are equal <br><br>
      *
-     * Two Users are equal if their id's, usernames, passwords and roles
-     * are equal
+     * Two Users are equal if their id's, usernames, passwords and
+     * granted authorities are equal
      *
      * @param obj The specified object to be compared with the User
      * @return True or False, depending on the result of the comparison
@@ -206,10 +258,9 @@ public class User {
     public boolean equals(Object obj) {
 
         if (obj instanceof User newUser) {
-            return Objects.equals(this.id, newUser.getId())
-                    && Objects.equals(this.username, newUser.getUsername())
+            return  Objects.equals(this.username, newUser.getUsername())
                     && Objects.equals(this.password, newUser.getPassword())
-                    && Objects.equals(this.role, newUser.getRole());
+                    && Objects.equals(this.authorities, newUser.getAuthorities());
         }
 
         return false;
