@@ -1,13 +1,18 @@
 package gr.aegean.icsd.newspaperapp.configuration;
 
+import gr.aegean.icsd.newspaperapp.util.enums.UserType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.factory.PasswordEncoderFactories;
+import org.springframework.security.crypto.password.DelegatingPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.JdbcUserDetailsManager;
 import org.springframework.security.provisioning.UserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
@@ -25,9 +30,10 @@ public class SecurityConfiguration {
     private DataSource dataSource;
 
     private final String apiBaseMapping = "/api/v0";
-    private final String storiesMapping = apiBaseMapping + "/stories";
-    private final String commentsMapping = apiBaseMapping + "/comments";
-    private final String topicsMapping = apiBaseMapping + "/topics";
+    private final String storiesMapping = apiBaseMapping + "/stories/**";
+    private final String commentsMapping = apiBaseMapping + "/comments/**";
+    private final String topicsMapping = apiBaseMapping + "/topics/**";
+
 
     @Bean
     SecurityFilterChain web(HttpSecurity http) throws Exception {
@@ -54,7 +60,7 @@ public class SecurityConfiguration {
                         .requestMatchers(HttpMethod.DELETE, storiesMapping).hasAnyRole("CURATOR", "JOURNALIST")
 
                         // Search Story, Show all Stories, Show all comments for a Story
-                        .requestMatchers(HttpMethod.GET, storiesMapping + "/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, storiesMapping).permitAll()
 
                         // ### COMMENT ENDPOINTS ### //
 
@@ -76,7 +82,7 @@ public class SecurityConfiguration {
                         .requestMatchers(HttpMethod.POST, topicsMapping).hasAnyRole("JOURNALIST", "CURATOR")
 
                         // Search Topic, Show Topic, Show all Topics, Show a Topic's Stories
-                        .requestMatchers(HttpMethod.GET, topicsMapping + "/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, topicsMapping).permitAll()
 
                         // Modify Topic
                         .requestMatchers(HttpMethod.PUT, topicsMapping).hasAnyRole("JOURNALIST", "CURATOR")
@@ -88,7 +94,10 @@ public class SecurityConfiguration {
                         .requestMatchers(HttpMethod.DELETE, topicsMapping).hasRole("CURATOR")
 
                         .anyRequest().denyAll()
+
                 )
+
+                .httpBasic(Customizer.withDefaults())
 
                 // Implement in future commits
                 .csrf().disable();
@@ -99,26 +108,42 @@ public class SecurityConfiguration {
     @Bean
     UserDetailsManager users(DataSource dataSource) {
 
-        UserDetails testCurator = User.builder()
-                .username("testCurator")
-                .password("testCurator")
-                .roles("CURATOR")
-                .disabled(false)
-                .build();
-
-        UserDetails testJournalist = User.builder()
-                .username("testJournalist")
-                .password("testJournalist")
-                .roles("JOURNALIST")
-                .disabled(false)
-                .build();
-
         JdbcUserDetailsManager users = new JdbcUserDetailsManager(dataSource);
 
-        users.createUser(testCurator);
-        users.createUser(testJournalist);
+        PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+
+        if (!users.userExists("testCurator")) {
+
+            String username = "testCurator";
+            String password = passwordEncoder.encode("testCurator");
+            UserType role = UserType.CURATOR;
+
+            UserDetails testCurator = new gr.aegean.icsd.newspaperapp.model.entity.User(username, password, role);
+            users.createUser(testCurator);
+        }
+
+        if (!users.userExists("testJournalist")) {
+
+            String username = "testJournalist";
+            String password = passwordEncoder.encode("testJournalist");
+            UserType role = UserType.JOURNALIST;
+
+            UserDetails testJournalist = new gr.aegean.icsd.newspaperapp.model.entity.User(username, password, role);
+            users.createUser(testJournalist);
+        }
+
 
         return users;
+
+    }
+
+    @Bean
+    PasswordEncoder encoder() {
+
+        DelegatingPasswordEncoder delegatingPasswordEncoder = (DelegatingPasswordEncoder) PasswordEncoderFactories.createDelegatingPasswordEncoder();
+        delegatingPasswordEncoder.setDefaultPasswordEncoderForMatches(new BCryptPasswordEncoder());
+
+        return delegatingPasswordEncoder;
 
     }
 
