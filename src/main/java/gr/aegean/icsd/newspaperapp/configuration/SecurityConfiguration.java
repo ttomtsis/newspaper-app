@@ -9,11 +9,15 @@ import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.annotation.web.configurers.oauth2.server.resource.OAuth2ResourceServerConfigurer;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.DelegatingPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
+import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.provisioning.JdbcUserDetailsManager;
 import org.springframework.security.provisioning.UserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
@@ -21,7 +25,6 @@ import org.springframework.security.web.SecurityFilterChain;
 import javax.sql.DataSource;
 
 import static jakarta.servlet.DispatcherType.*;
-
 @Configuration
 @EnableWebSecurity
 public class SecurityConfiguration {
@@ -46,19 +49,11 @@ public class SecurityConfiguration {
     SecurityFilterChain web(HttpSecurity http) throws Exception {
 
         http
-//                .formLogin((formLogin) ->
-//                        formLogin
-//                                .loginPage("/")
-//                                //.failureUrl("/authentication/login?failed")
-//                                //.loginProcessingUrl("/authentication/login/process")
-//                )
-
                 .authorizeHttpRequests((authorize) -> authorize
 
                         .dispatcherTypeMatchers(FORWARD, ERROR, INCLUDE).permitAll()
 
                         // Authentication endpoints
-                        .requestMatchers(HttpMethod.POST, "/auth/**").permitAll()
                         .requestMatchers("/oauth/**").permitAll()
                         .requestMatchers("/").permitAll()
 
@@ -116,11 +111,11 @@ public class SecurityConfiguration {
 
                 .csrf(AbstractHttpConfigurer::disable)
 
-//                .sessionManagement((session) -> session
-//                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-//                )
+                .sessionManagement((session) -> session
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                )
 
-                .oauth2Login(Customizer.withDefaults())
+                .oauth2ResourceServer(OAuth2ResourceServerConfigurer::jwt)
 
                 .httpBasic(Customizer.withDefaults());
 
@@ -168,5 +163,19 @@ public class SecurityConfiguration {
         return delegatingPasswordEncoder;
 
     }
+
+    @Bean
+    public JwtAuthenticationConverter jwtAuthenticationConverter() {
+
+        JwtGrantedAuthoritiesConverter grantedAuthoritiesConverter = new JwtGrantedAuthoritiesConverter();
+        grantedAuthoritiesConverter.setAuthorityPrefix("ROLE_");
+
+        JwtAuthenticationConverter jwtAuthenticationConverter = new JwtAuthenticationConverter();
+        jwtAuthenticationConverter.setJwtGrantedAuthoritiesConverter(grantedAuthoritiesConverter);
+
+        return jwtAuthenticationConverter;
+
+    }
+
 
 }
