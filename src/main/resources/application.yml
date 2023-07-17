@@ -1,0 +1,36 @@
+logging:
+  level:
+    org:
+      springframework:
+        security: TRACE
+
+spring:
+  datasource:
+    url: ${DATASOURCE_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+        dialect.storage_engine: innodb
+
+  security:
+    oauth2:
+      client:
+        registration:
+          auth0:
+            client-id: ${CLIENT_ID}
+            client-secret: ${CLIENT_SECRET}
+            scope:
+              - openid
+              - profile
+              - email
+        provider:
+          auth0:
+            issuer-uri: ${PROVIDER_URI}
