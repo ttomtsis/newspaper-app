@@ -1,7 +1,6 @@
 package gr.aegean.icsd.newspaperapp.configuration;
 
 import gr.aegean.icsd.newspaperapp.util.enums.UserType;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -9,7 +8,6 @@ import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
-import org.springframework.security.config.annotation.web.configurers.oauth2.server.resource.OAuth2ResourceServerConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -29,13 +27,17 @@ import static jakarta.servlet.DispatcherType.*;
 @EnableWebSecurity
 public class SecurityConfiguration {
 
-    @Autowired
-    private DataSource dataSource;
-
+    private final DataSource dataSource;
     private final String apiBaseMapping = "/api/v0";
     private final String storiesMapping = apiBaseMapping + "/stories/**";
     private final String commentsMapping = apiBaseMapping + "/comments/**";
     private final String topicsMapping = apiBaseMapping + "/topics/**";
+
+
+    public SecurityConfiguration(DataSource dataSource) {
+        this.dataSource = dataSource;
+    }
+
 
     /**
      * Configures the security filter chain to be used by Spring Security to secure the endpoints of the application.
@@ -44,11 +46,11 @@ public class SecurityConfiguration {
      * @param http HttpSecurity object used to configure the security filter chain.
      * @return a SecurityFilterChain object representing the configured security filter chain.
      */
-
     @Bean
     SecurityFilterChain web(HttpSecurity http) throws Exception {
 
         http
+
                 .authorizeHttpRequests((authorize) -> authorize
 
                         .dispatcherTypeMatchers(FORWARD, ERROR, INCLUDE).permitAll()
@@ -115,13 +117,23 @@ public class SecurityConfiguration {
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
 
-                .oauth2ResourceServer(OAuth2ResourceServerConfigurer::jwt)
+                .oauth2ResourceServer(oauth2 -> oauth2
+                        .jwt(jwt -> Customizer.withDefaults().customize(jwt))
+                )
 
                 .httpBasic(Customizer.withDefaults());
 
         return http.build();
     }
 
+    /**
+     * Configures a JdbcUserDetailsManager to use in conjunction with Basic Authentication <br>
+     *
+     * The Manager preloads the database with two users, testCurator and testJournalist
+     *
+     * @param dataSource The datasource that will be used with the JdbcUserDetailsManager
+     * @return Configured {@link JdbcUserDetailsManager}
+     */
     @Bean
     UserDetailsManager users(DataSource dataSource) {
 
@@ -154,6 +166,13 @@ public class SecurityConfiguration {
 
     }
 
+    /**
+     * Creates and configures a Delegating Password Encoder to use in conjunction with Basic Authentication <br>
+     *
+     * The password encoder uses bcrypt encoding by default and is used before persisting the users in the database
+     *
+     * @return Configured {@link DelegatingPasswordEncoder}
+     */
     @Bean
     PasswordEncoder encoder() {
 
@@ -164,6 +183,13 @@ public class SecurityConfiguration {
 
     }
 
+    /**
+     * Creates and configures a JWT Authentication converter to use in conjunction with OAuth2 authentication <br>
+     *
+     * The Converter matches scopes to roles, i.e. SCOPE_CURATOR is converted into ROLE_CURATOR
+     *
+     * @return Configured {@link JwtAuthenticationConverter}
+     */
     @Bean
     public JwtAuthenticationConverter jwtAuthenticationConverter() {
 
