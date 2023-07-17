@@ -8,6 +8,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.factory.PasswordEncoderFactories;
@@ -19,8 +20,7 @@ import org.springframework.security.web.SecurityFilterChain;
 
 import javax.sql.DataSource;
 
-import static jakarta.servlet.DispatcherType.ERROR;
-import static jakarta.servlet.DispatcherType.FORWARD;
+import static jakarta.servlet.DispatcherType.*;
 
 @Configuration
 @EnableWebSecurity
@@ -34,16 +34,33 @@ public class SecurityConfiguration {
     private final String commentsMapping = apiBaseMapping + "/comments/**";
     private final String topicsMapping = apiBaseMapping + "/topics/**";
 
+    /**
+     * Configures the security filter chain to be used by Spring Security to secure the endpoints of the application.
+     * Authentication and authorization rules are set up here.
+     *
+     * @param http HttpSecurity object used to configure the security filter chain.
+     * @return a SecurityFilterChain object representing the configured security filter chain.
+     */
 
     @Bean
     SecurityFilterChain web(HttpSecurity http) throws Exception {
+
         http
+//                .formLogin((formLogin) ->
+//                        formLogin
+//                                .loginPage("/")
+//                                //.failureUrl("/authentication/login?failed")
+//                                //.loginProcessingUrl("/authentication/login/process")
+//                )
+
                 .authorizeHttpRequests((authorize) -> authorize
 
-                        .dispatcherTypeMatchers(FORWARD, ERROR).permitAll()
+                        .dispatcherTypeMatchers(FORWARD, ERROR, INCLUDE).permitAll()
 
                         // Authentication endpoints
                         .requestMatchers(HttpMethod.POST, "/auth/**").permitAll()
+                        .requestMatchers("/oauth/**").permitAll()
+                        .requestMatchers("/").permitAll()
 
                         // ### STORY ENDPOINTS ### //
 
@@ -97,10 +114,15 @@ public class SecurityConfiguration {
 
                 )
 
-                .httpBasic(Customizer.withDefaults())
+                .csrf(AbstractHttpConfigurer::disable)
 
-                // Implement in future commits
-                .csrf().disable();
+//                .sessionManagement((session) -> session
+//                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+//                )
+
+                .oauth2Login(Customizer.withDefaults())
+
+                .httpBasic(Customizer.withDefaults());
 
         return http.build();
     }
