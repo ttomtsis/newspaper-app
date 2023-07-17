@@ -22,15 +22,8 @@ spring:
 
   security:
     oauth2:
-      client:
-        registration:
-          auth0:
-            client-id: ${CLIENT_ID}
-            client-secret: ${CLIENT_SECRET}
-            scope:
-              - openid
-              - profile
-              - email
-        provider:
-          auth0:
-            issuer-uri: ${PROVIDER_URI}
+      resourceserver:
+        jwt:
+          issuer-uri: ${PROVIDER_URI}
+          jwk-set-uri: ${PROVIDER_JWKS}
+          audiences: ${AUDIENCES}
