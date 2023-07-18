@@ -27,3 +27,11 @@ spring:
           issuer-uri: ${PROVIDER_URI}
           jwk-set-uri: ${PROVIDER_JWKS}
           audiences: ${AUDIENCES}
+
+server:
+  ssl:
+    enabled: true
+    key-store: ${KEY_LOCATION}
+    key-store-password: ${KEY_PASSWORD}
+    keyStoreType: ${KEY_TYPE}
+    keyAlias: ${KEY_ALIAS}
