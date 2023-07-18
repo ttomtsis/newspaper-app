@@ -8,6 +8,7 @@ import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -19,6 +20,8 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtGra
 import org.springframework.security.provisioning.JdbcUserDetailsManager;
 import org.springframework.security.provisioning.UserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter;
+import org.springframework.security.web.header.writers.XXssProtectionHeaderWriter;
 
 import javax.sql.DataSource;
 
@@ -111,11 +114,41 @@ public class SecurityConfiguration {
 
                 )
 
-                .csrf(AbstractHttpConfigurer::disable)
+                .headers(headers -> headers
+
+                        .cacheControl(HeadersConfigurer.CacheControlConfig::disable)
+
+                        .xssProtection(xss -> xss
+                                .headerValue(XXssProtectionHeaderWriter.HeaderValue.ENABLED_MODE_BLOCK)
+                        )
+
+                        .contentSecurityPolicy(csp -> csp
+                                .policyDirectives("default-src 'none'")
+                        )
+
+                        .referrerPolicy(referrer -> referrer
+                                .policy(ReferrerPolicyHeaderWriter.ReferrerPolicy.SAME_ORIGIN)
+                        )
+
+                        .httpStrictTransportSecurity(hsts -> hsts
+                                .includeSubDomains(true)
+                                .preload(true)
+                                .maxAgeInSeconds(31536000)
+                        )
+
+                )
+
+                .requiresChannel(channel -> channel
+                        .anyRequest().requiresSecure()
+                )
 
                 .sessionManagement((session) -> session
+
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+
                 )
+
+                .csrf(AbstractHttpConfigurer::disable)
 
                 .oauth2ResourceServer(oauth2 -> oauth2
                         .jwt(jwt -> Customizer.withDefaults().customize(jwt))
@@ -202,6 +235,5 @@ public class SecurityConfiguration {
         return jwtAuthenticationConverter;
 
     }
-
 
 }
