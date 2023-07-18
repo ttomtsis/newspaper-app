@@ -14,13 +14,17 @@ Java Spring Boot application that exposes a RESTful API servicing the day to day
 
 # Features
 * RBAC with multiple users
+* Basic Authentication with users persisted in a database
+* OAuth2 Authentication with Auth0 as a provider
 * Unit tests with JUnit
 * HATEOAS design
 * Hibernate ORM
 
 # Technology stack
 * Java 17
-* Spring Boot
+* Spring Boot 3.1
+* Spring Security 6.1
+* Hibernate ORM 6
 
 # Getting Started
 This project is still in the early stages of development and considered very immature, however if you want to 
