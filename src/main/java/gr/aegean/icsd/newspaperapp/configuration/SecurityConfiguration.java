@@ -20,10 +20,12 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtGra
 import org.springframework.security.provisioning.JdbcUserDetailsManager;
 import org.springframework.security.provisioning.UserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.firewall.StrictHttpFirewall;
 import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter;
 import org.springframework.security.web.header.writers.XXssProtectionHeaderWriter;
 
 import javax.sql.DataSource;
+import java.util.Arrays;
 
 import static jakarta.servlet.DispatcherType.*;
 @Configuration
@@ -236,4 +238,17 @@ public class SecurityConfiguration {
 
     }
 
+    /**
+     * Create and configure the HttpFirewall to allow only the subset of HTTP Methods used by the server
+     *
+     * @return Configured {@link StrictHttpFirewall}
+     */
+    @Bean
+    public StrictHttpFirewall httpFirewall() {
+
+        StrictHttpFirewall firewall = new StrictHttpFirewall();
+        firewall.setAllowedHttpMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH"));
+
+        return firewall;
+    }
 }
