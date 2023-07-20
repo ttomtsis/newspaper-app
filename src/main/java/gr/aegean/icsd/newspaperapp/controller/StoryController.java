@@ -57,15 +57,21 @@ public class StoryController {
 
     /**
      * Creates a new Story entity in the database. <br>
-     * Only user roles 'JOURNALIST' and 'CURATOR' may use this operation
+     * Only user role 'JOURNALIST' may use this operation
      *
-     * @param newStory The comment object to be saved in the database
+     * @param newStory The StoryModel object, representing the Story that will be saved in the database
      * @return a StoryModel representing the newly created resource.
      */
     @PostMapping(path = baseMapping, consumes = "application/json", produces = "application/json")
-    public ResponseEntity<StoryModel> createStory(@RequestBody Story newStory) {
+    //@JsonIgnoreProperties(value = {"name", "content, topicIDs"}, ignoreUnknown = true)
+    public ResponseEntity<StoryModel> createStory(@RequestBody StoryModel newStory) {
+
         log.info("New 'create story' Request");
+
+        Story savedStory = service.createStory(newStory.getName(), newStory.getContent(), newStory.getTopics());
+
         return new ResponseEntity<>(null, HttpStatus.CREATED);
+
     }
 
     /**
