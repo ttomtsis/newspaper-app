@@ -63,7 +63,6 @@ public class StoryController {
      * @return a StoryModel representing the newly created resource.
      */
     @PostMapping(path = baseMapping, consumes = "application/json", produces = "application/json")
-    //@JsonIgnoreProperties(value = {"name", "content, topicIDs"}, ignoreUnknown = true)
     public ResponseEntity<StoryModel> createStory(@RequestBody StoryModel newStory) {
 
         log.info("New 'create story' Request");
@@ -82,27 +81,22 @@ public class StoryController {
      * @return {@link org.springframework.http.HttpStatus#NO_CONTENT 204 Status Code}
      */
     @PutMapping(path = baseMapping + "/{id}", consumes = "application/json")
-    public ResponseEntity<Void> updateStory(@PathVariable long id, @RequestBody Story updatedStory) {
-        log.info("New 'update story' Request");
-        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-    }
+    public ResponseEntity<Void> updateStory(@PathVariable long id, @RequestBody StoryModel updatedStory) {
 
-    /**
-     * Delete a Story.
-     *
-     * @param id the id of the Story entity that is going to be deleted
-     * @return {@link org.springframework.http.HttpStatus#NO_CONTENT 204 Status Code}
-     */
-    @DeleteMapping(path = baseMapping + "/{id}")
-    public ResponseEntity<Void> deleteStory(@PathVariable long id) {
-        log.info("New 'delete story' Request");
+        log.info("New 'update story' Request");
+
+        service.updateStory(id, updatedStory.getName(), updatedStory.getContent(), updatedStory.getTopics());
+
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+
     }
 
     /**
      * Shows all Stories saved in the database, can optionally use one of the filters listed below: <br>
+     *
      * 1) Filter by name and/or content <br>
      * 2) Filter by state and/or a date range <br>
+     *
      * @param name Will filter stories according to this name
      * @param content Will filter stories according to this content
      * @param state Will filter stories according to this state
@@ -110,6 +104,7 @@ public class StoryController {
      * @param maxDate Will filter stories according to this range of dates, this is the later date
      * @param page Number of the page the client has requested
      * @param size Size of the requested page
+     *
      * @return PagedModel containing the Story representations as well as the links to navigate it
      */
     // Also check GitHub Issue #9 : Rewrite Story Controller method: showAllStoriesFiltered
