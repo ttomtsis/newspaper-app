@@ -53,7 +53,7 @@ public class SecurityConfiguration {
      * @return a SecurityFilterChain object representing the configured security filter chain.
      */
     @Bean
-    SecurityFilterChain web(HttpSecurity http) throws Exception {
+    SecurityFilterChain createFilterChain(HttpSecurity http) throws Exception {
 
         http
 
@@ -68,10 +68,10 @@ public class SecurityConfiguration {
                         // ### STORY ENDPOINTS ### //
 
                         // Create Story
-                        .requestMatchers(HttpMethod.POST, storiesMapping).hasAnyRole("CURATOR", "JOURNALIST")
+                        .requestMatchers(HttpMethod.POST, storiesMapping).hasRole("JOURNALIST")
 
                         // Modify Story
-                        .requestMatchers(HttpMethod.PUT, storiesMapping).hasAnyRole("CURATOR", "JOURNALIST")
+                        .requestMatchers(HttpMethod.PUT, storiesMapping).hasRole("JOURNALIST")
 
                         // Submit, Approve, Reject, Publish Story
                         .requestMatchers(HttpMethod.PATCH, storiesMapping).hasAnyRole("CURATOR", "JOURNALIST")
