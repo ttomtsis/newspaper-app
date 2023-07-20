@@ -2,7 +2,7 @@ logging:
   level:
     org:
       springframework:
-        security: TRACE
+        security: DEBUG
 
 spring:
   datasource:
