@@ -5,6 +5,7 @@ import gr.aegean.icsd.newspaperapp.model.entity.Topic;
 import gr.aegean.icsd.newspaperapp.model.entity.User;
 import gr.aegean.icsd.newspaperapp.model.repository.StoryRepository;
 import gr.aegean.icsd.newspaperapp.model.repository.TopicRepository;
+import gr.aegean.icsd.newspaperapp.util.enums.StoryState;
 import gr.aegean.icsd.newspaperapp.util.enums.TopicState;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -38,11 +39,11 @@ public class StoryService {
     }
 
     @PreAuthorize("hasAuthority('ROLE_JOURNALIST')")
-    public Story createStory(@NotBlank String storyName, @NotBlank String storyContent, @NotNull List<Integer> topicIDs) {
+    public Story createStory(@NotBlank String storyName, @NotBlank String storyContent, List<Integer> topicIDs) {
 
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
 
-        if (topicIDs.isEmpty())  {
+        if (topicIDs == null)  {
 
             Story newStory = new Story(storyName, new User(username), storyContent);
 
@@ -77,6 +78,38 @@ public class StoryService {
         }
 
         return topicsList;
+
+    }
+
+    @PreAuthorize("hasAuthority('ROLE_JOURNALIST')")
+    public void updateStory(@NotNull Long storyID, String newName, String newContent, List<Integer> topicIDs) {
+
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+
+        Optional<Story> savedStory = storyRepository.findById(storyID);
+
+        // Does the Story exist ? If so does it belong to the User ?
+        if (savedStory.isEmpty() || !savedStory.get().getAuthor().getUsername().equals(username)) {
+            throw new RuntimeException("Story not found");
+        }
+
+        // Is the Story in the correct State ?
+        if (!savedStory.get().getState().equals(StoryState.CREATED)) {
+            throw new RuntimeException("The Story cannot be modified in this state");
+        }
+
+        Story updatedStory = savedStory.get();
+
+        if (newName != null && !newName.isBlank()) { updatedStory.setName(newName); }
+
+        if (newContent != null && !newContent.isBlank()) { updatedStory.setContent(newContent); }
+
+        if (topicIDs != null) {
+            Set<Topic> newTopicsList = createTopicsListFromIDs(topicIDs);
+            updatedStory.updateTopics(newTopicsList);
+        }
+
+        storyRepository.save(updatedStory);
 
     }
 
