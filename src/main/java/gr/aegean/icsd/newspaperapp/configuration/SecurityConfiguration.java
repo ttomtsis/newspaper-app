@@ -1,9 +1,12 @@
 package gr.aegean.icsd.newspaperapp.configuration;
 
+import gr.aegean.icsd.newspaperapp.model.repository.UserRepository;
+import gr.aegean.icsd.newspaperapp.security.CustomUserDetailsManager;
 import gr.aegean.icsd.newspaperapp.util.enums.UserType;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -15,17 +18,13 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.DelegatingPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
-import org.springframework.security.provisioning.JdbcUserDetailsManager;
-import org.springframework.security.provisioning.UserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.firewall.StrictHttpFirewall;
 import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter;
 import org.springframework.security.web.header.writers.XXssProtectionHeaderWriter;
 
-import javax.sql.DataSource;
 import java.util.Arrays;
 
 import static jakarta.servlet.DispatcherType.*;
@@ -34,15 +33,15 @@ import static jakarta.servlet.DispatcherType.*;
 @EnableWebSecurity
 public class SecurityConfiguration {
 
-    private final DataSource dataSource;
+    private final UserRepository userRepository;
     private final String apiBaseMapping = "/api/v0";
     private final String storiesMapping = apiBaseMapping + "/stories/**";
     private final String commentsMapping = apiBaseMapping + "/comments/**";
     private final String topicsMapping = apiBaseMapping + "/topics/**";
 
 
-    public SecurityConfiguration(DataSource dataSource) {
-        this.dataSource = dataSource;
+    public SecurityConfiguration(UserRepository userRepository) {
+        this.userRepository = userRepository;
     }
 
 
@@ -69,7 +68,7 @@ public class SecurityConfiguration {
                         // ### STORY ENDPOINTS ### //
 
                         // Create Story
-                        .requestMatchers(HttpMethod.POST, storiesMapping).hasRole("JOURNALIST")
+                        .requestMatchers(HttpMethod.POST, storiesMapping).hasAnyRole("CURATOR", "JOURNALIST")
 
                         // Modify Story
                         .requestMatchers(HttpMethod.PUT, storiesMapping).hasAnyRole("CURATOR", "JOURNALIST")
@@ -163,30 +162,22 @@ public class SecurityConfiguration {
         return http.build();
     }
 
+
     /**
-     * Configures a JdbcUserDetailsManager to use in conjunction with Basic Authentication <br>
+     * Configures a DaoAuthenticationProvider to use in conjunction with Basic Authentication <br>
      *
-     * The Manager preloads the database with two users, testCurator and testJournalist
+     * The Provider preloads the database with two users, testCurator and testJournalist and uses
+     * the {@link CustomUserDetailsManager}
      *
-     * @param dataSource The datasource that will be used with the JdbcUserDetailsManager
-     * @return Configured {@link JdbcUserDetailsManager}
+     * @return Configured DaoAuthenticationProvider
      */
     @Bean
-    UserDetailsManager users(DataSource dataSource) {
+    DaoAuthenticationProvider createAuthenticationProvider() {
 
-        JdbcUserDetailsManager users = new JdbcUserDetailsManager(dataSource);
+        CustomUserDetailsManager users = new CustomUserDetailsManager(userRepository);
 
-        PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
-
-        if (!users.userExists("testCurator")) {
-
-            String username = "testCurator";
-            String password = passwordEncoder.encode("testCurator");
-            UserType role = UserType.CURATOR;
-
-            UserDetails testCurator = new gr.aegean.icsd.newspaperapp.model.entity.User(username, password, role);
-            users.createUser(testCurator);
-        }
+        DelegatingPasswordEncoder passwordEncoder = (DelegatingPasswordEncoder) PasswordEncoderFactories.createDelegatingPasswordEncoder();
+        passwordEncoder.setDefaultPasswordEncoderForMatches(new BCryptPasswordEncoder());
 
         if (!users.userExists("testJournalist")) {
 
@@ -198,27 +189,25 @@ public class SecurityConfiguration {
             users.createUser(testJournalist);
         }
 
+        if (!users.userExists("testCurator")) {
 
-        return users;
+            String username = "testCurator";
+            String password = passwordEncoder.encode("testCurator");
+            UserType role = UserType.CURATOR;
 
-    }
+            UserDetails testJournalist = new gr.aegean.icsd.newspaperapp.model.entity.User(username, password, role);
+            users.createUser(testJournalist);
+        }
 
-    /**
-     * Creates and configures a Delegating Password Encoder to use in conjunction with Basic Authentication <br>
-     *
-     * The password encoder uses bcrypt encoding by default and is used before persisting the users in the database
-     *
-     * @return Configured {@link DelegatingPasswordEncoder}
-     */
-    @Bean
-    PasswordEncoder encoder() {
+        DaoAuthenticationProvider authenticationProvider = new DaoAuthenticationProvider();
 
-        DelegatingPasswordEncoder delegatingPasswordEncoder = (DelegatingPasswordEncoder) PasswordEncoderFactories.createDelegatingPasswordEncoder();
-        delegatingPasswordEncoder.setDefaultPasswordEncoderForMatches(new BCryptPasswordEncoder());
+        authenticationProvider.setUserDetailsService(users);
+        authenticationProvider.setPasswordEncoder(passwordEncoder);
 
-        return delegatingPasswordEncoder;
+        return authenticationProvider;
 
     }
+
 
     /**
      * Creates and configures a JWT Authentication converter to use in conjunction with OAuth2 authentication <br>
