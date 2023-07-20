@@ -195,7 +195,7 @@ public class Story {
             this.state = StoryState.CREATED;
         }
         else {
-            throw new IllegalArgumentException("You must provide at least 1 Topic");
+            throw new IllegalArgumentException("You must provide at least 1 Valid Topic");
         }
 
     }
