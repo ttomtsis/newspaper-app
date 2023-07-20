@@ -415,6 +415,24 @@ public class Story {
     }
 
     /**
+     * Updates the Topics of the current Story according to the Topics
+     * of a new topicsList <br>
+     *
+     * @param newTopics New topicsList containing all the new Topics
+     */
+    public void updateTopics(Set<Topic> newTopics) {
+
+        if (newTopics != null) {
+            this.topicsList.clear();
+            this.topicsList.addAll(newTopics);
+        }
+        else {
+            throw new IllegalArgumentException("Updated Topics List cannot be null");
+        }
+
+    }
+
+    /**
      * Create a Hash of an instantiated Topic
      *
      * @return A hash of the fields {@link #id}, {@link #authorID},
