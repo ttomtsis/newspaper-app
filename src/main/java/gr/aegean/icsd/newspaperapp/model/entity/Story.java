@@ -234,6 +234,13 @@ public class Story {
     public Story(){}
 
     /**
+     * Used to satisfy hibernate's foreign key constraints
+     */
+    public Story(Long storyID) {
+        this.id = storyID;
+    }
+
+    /**
      * Generates the {@link #creationDate creationDate} of the Story <br>
      * before the Story is persisted in the database.
      */
