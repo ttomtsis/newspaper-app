@@ -386,6 +386,14 @@ public class Story {
     // UTILITY
 
     /**
+     * When a Story has been approved after a failed submission,
+     * set the rejection reason to null <br>
+     */
+    public void removeRejectionReason() {
+        this.rejectionReason = null;
+    }
+
+    /**
      * Adds a Topic to the Topic list <br>
      *
      * @param newTopic Topic to be added
