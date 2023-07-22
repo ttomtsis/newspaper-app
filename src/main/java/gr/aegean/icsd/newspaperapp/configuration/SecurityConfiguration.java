@@ -3,6 +3,7 @@ package gr.aegean.icsd.newspaperapp.configuration;
 import gr.aegean.icsd.newspaperapp.model.repository.UserRepository;
 import gr.aegean.icsd.newspaperapp.security.CustomUserDetailsManager;
 import gr.aegean.icsd.newspaperapp.util.enums.UserType;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -39,6 +40,12 @@ public class SecurityConfiguration {
     private final String commentsMapping = apiBaseMapping + "/comments/**";
     private final String topicsMapping = apiBaseMapping + "/topics/**";
 
+
+    @Value("${users.testCuratorPassword}")
+    private String testCuratorPassword;
+
+    @Value("${users.testJournalistPassword}")
+    private String testJournalistPassword;
 
     public SecurityConfiguration(UserRepository userRepository) {
         this.userRepository = userRepository;
@@ -182,7 +189,7 @@ public class SecurityConfiguration {
         if (!users.userExists("testJournalist")) {
 
             String username = "testJournalist";
-            String password = passwordEncoder.encode("testJournalist");
+            String password = passwordEncoder.encode(testJournalistPassword);
             UserType role = UserType.JOURNALIST;
 
             UserDetails testJournalist = new gr.aegean.icsd.newspaperapp.model.entity.User(username, password, role);
@@ -192,7 +199,7 @@ public class SecurityConfiguration {
         if (!users.userExists("testCurator")) {
 
             String username = "testCurator";
-            String password = passwordEncoder.encode("testCurator");
+            String password = passwordEncoder.encode(testCuratorPassword);
             UserType role = UserType.CURATOR;
 
             UserDetails testJournalist = new gr.aegean.icsd.newspaperapp.model.entity.User(username, password, role);
