@@ -13,6 +13,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 /**
  * Controller that handles requests related to the 'Comment' resource. <br>
  * Maps all operations, except {@link #showAllCommentsForAStory(long, int, int, SortType) showAllCommentsForAStory}, at 'api/v0/comments' <br>
@@ -37,6 +39,7 @@ public class CommentController {
      endpoints that include a page as their response */
     private static final String defaultPageSize = "10";
 
+
     /**
      * Sole constructor, never used implicitly <br>
      * Instantiates the CommentService, to forward requests to the service layer
@@ -51,6 +54,8 @@ public class CommentController {
         this.assembler = commentModelAssembler;
     }
 
+
+
     /**
      * Creates a new Comment entity in the database. <br>
      *
@@ -58,10 +63,16 @@ public class CommentController {
      * @return a CommentModel representing the newly created resource.
      */
     @PostMapping(path = baseMapping, consumes = "application/json", produces = "application/json")
-    public ResponseEntity<CommentModel> createComment(@RequestBody Comment newComment) {
+    public ResponseEntity<CommentModel> createComment(@RequestBody CommentModel newComment) {
+
         log.info("New 'create comment' Request");
+
+        service.createComment(newComment.getStoryID(), newComment.getContent());
+
         return new ResponseEntity<>(null, HttpStatus.CREATED);
     }
+
+
 
     /**
      * Updates the 'content' field of a specific Comment.
@@ -71,10 +82,16 @@ public class CommentController {
      * @return {@link org.springframework.http.HttpStatus#NO_CONTENT 204 Status Code}
      */
     @PutMapping(path = baseMapping + "/{id}", consumes = "application/json")
-    public ResponseEntity<Void> updateComment(@PathVariable long id, @RequestBody Comment updatedComment) {
+    public ResponseEntity<Void> updateComment(@PathVariable long id, @RequestBody CommentModel updatedComment) {
+
         log.info("New 'update comment' Request");
+
+        service.updateComment(id, updatedComment.getContent());
+
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
+
+
 
     /**
      * Get all the comments associated with a story <br>
@@ -86,6 +103,7 @@ public class CommentController {
      * @param size Size of the requested page
      * @param sortType Type of sorting that the comments will have.
      *                 Only Sorted according to creation date
+     *
      * @return a PagedModel containing the Comment representations, sorted by their creation date in
      * ascending order, and the links to navigate it
      */
@@ -93,10 +111,19 @@ public class CommentController {
     public ResponseEntity<PagedModel<CommentModel>> showAllCommentsForAStory(@PathVariable long storyId,
                                                                              @RequestParam(defaultValue = "0") int page,
                                                                              @RequestParam(defaultValue = defaultPageSize) int size,
-                                                                             @RequestParam(defaultValue = "ASC") SortType sortType ) {
+                                                                             @RequestParam(defaultValue = "DESC") SortType sortType ) {
+
         log.info("New 'show all comments for a story' Request");
+        List<Comment> commentList = service.showCommentsByStory(storyId);
+
+        for (Comment comment : commentList) {
+            log.error(comment.getContent() + " - " + comment.getState() + " - " + comment.getCreationDate());
+        }
+
         return new ResponseEntity<>(null, HttpStatus.OK);
     }
+
+
 
     /**
      * Update the state of a Comment to {@link CommentState#APPROVED APPROVED} <br>
@@ -114,9 +141,15 @@ public class CommentController {
      */
     @PatchMapping(baseMapping + "/{id}")
     public ResponseEntity<Void> approveComment(@PathVariable long id) {
-        log.info("New 'update comment's state' Request");
+
+        log.info("New 'approve comment' Request");
+
+        service.approveComment(id);
+
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
+
+
 
     /**
      * Delete a Comment. ( When a Comment is rejected it is automatically deleted )
@@ -125,7 +158,11 @@ public class CommentController {
      */
     @DeleteMapping(baseMapping + "/{id}")
     public ResponseEntity<Void> rejectComment(@PathVariable long id) {
+
         log.info("New 'delete comment' Request");
+
+        service.rejectComment(id);
+
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 }
