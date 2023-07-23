@@ -19,6 +19,10 @@ import org.springframework.validation.annotation.Validated;
 
 import java.util.*;
 
+/**
+ * Class servicing controller requests about
+ * the Story entity
+ */
 @Service
 @Transactional
 @Validated
@@ -27,6 +31,9 @@ public class StoryService {
     private final StoryRepository storyRepository;
     private final TopicRepository topicRepository;
 
+    // Allowed Story states per User, a User cannot access a
+    // Story whose state is not in this List.
+    // ( Except the Journalist, in case he owns the Story )
     private final Set <StoryState> allowedCuratorStates;
     private final Set <StoryState> allowedJournalistStates;
     private final Set <StoryState> allowedVisitorStates;
@@ -51,6 +58,14 @@ public class StoryService {
     }
 
 
+    /**
+     * Takes as input a List of topic id's then, queries the database
+     * and transforms the input list into a list of Topic entities
+     *
+     * @param topicIDs Set of Topic id's
+     *
+     * @return Set of Topic entities
+     */
     private Set<Topic> createTopicsListFromIDs(List<Integer> topicIDs) {
 
         Set<Topic> topicsList = new HashSet<>();
@@ -73,8 +88,15 @@ public class StoryService {
 
 
 
+    /**
+     * Create a new Story entity and persist it in the database
+     *
+     * @param storyName Name of the new Story
+     * @param storyContent Content of the new Story
+     * @param topicIDs (Optional) List of Topics this Story will belong to
+     */
     @PreAuthorize("hasAuthority('ROLE_JOURNALIST')")
-    public Story createStory(@NotBlank String storyName, @NotBlank String storyContent, List<Integer> topicIDs) {
+    public void createStory(@NotBlank String storyName, @NotBlank String storyContent, List<Integer> topicIDs) {
 
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
 
@@ -82,7 +104,7 @@ public class StoryService {
 
             Story newStory = new Story(storyName, new User(username), storyContent);
 
-            return storyRepository.save(newStory);
+            storyRepository.save(newStory);
 
         }
         else {
@@ -90,7 +112,7 @@ public class StoryService {
             Set<Topic> topicsList = createTopicsListFromIDs(topicIDs);
             Story newStory = new Story(storyName, new User(username), storyContent, topicsList);
 
-            return storyRepository.save(newStory);
+            storyRepository.save(newStory);
 
         }
 
@@ -98,6 +120,14 @@ public class StoryService {
 
 
 
+    /**
+     * Update a Story's name, content, and/or Topics
+     *
+     * @param storyID ID of the Story to be updated
+     * @param newName New name of the Story
+     * @param newContent New content of the Story
+     * @param topicIDs New Topics this Story will belong to
+     */
     @PreAuthorize("hasAuthority('ROLE_JOURNALIST')")
     public void updateStory(@Positive Long storyID, String newName, String newContent, List<Integer> topicIDs) {
 
@@ -131,7 +161,13 @@ public class StoryService {
     }
 
 
-
+    /**
+     * Search Stories matching the provided name
+     *
+     * @param name Provided name
+     *
+     * @return List of Stories matching the provided name
+     */
     @Transactional(readOnly = true)
     public List<Story> findStoriesByName(@NotBlank String name) {
 
@@ -156,6 +192,13 @@ public class StoryService {
 
 
 
+    /**
+     * Search Stories matching the provided content
+     *
+     * @param content Provided content
+     *
+     * @return List of Stories matching the provided content
+     */
     @Transactional(readOnly = true)
     public List<Story> findStoriesByContent(@NotBlank String content) {
 
@@ -180,6 +223,11 @@ public class StoryService {
 
 
 
+    /**
+     * Show all Stories currently persisted in the database
+     *
+     * @return List of all Stories currently persisted in the database
+     */
     @Transactional(readOnly = true)
     public List<Story> findAllStories() {
 
@@ -204,6 +252,14 @@ public class StoryService {
 
 
 
+    /**
+     * Search Stories matching the provided name and content
+     *
+     * @param name Provided name
+     * @param content Provided content
+     *
+     * @return List of Stories matching the provided name and content
+     */
     @Transactional(readOnly = true)
     public List<Story> findStoriesByContentAndName(@NotBlank String name, @NotBlank String content) {
 
@@ -227,6 +283,15 @@ public class StoryService {
     }
 
 
+
+    /**
+     * Searches for stories whose creation date falls within the specified date range.
+     *
+     * @param minDate the start of the date range (inclusive)
+     * @param maxDate the end of the date range (inclusive)
+     *
+     * @return a list of stories that were created within the specified date range
+     */
 
     @Transactional(readOnly = true)
     public List<Story> findStoriesByDateRange(@NotNull Date minDate, @NotNull Date maxDate) {
@@ -252,6 +317,13 @@ public class StoryService {
 
 
 
+    /**
+     * Search Stories whose state matches the provided state
+     *
+     * @param state Provided state
+     *
+     * @return List of Stories whose state matches the provided state
+     */
     @Transactional(readOnly = true)
     @PreAuthorize("hasAnyAuthority('ROLE_CURATOR', 'ROLE_JOURNALIST')")
     public List<Story> findStoriesByState(@NotBlank StoryState state) {
@@ -274,6 +346,13 @@ public class StoryService {
 
 
 
+    /**
+     * Search Stories associated with the specified Topic
+     *
+     * @param topicID ID of the specified Topic
+     *
+     * @return List of Stories associated with the Topic
+     */
     @Transactional(readOnly = true)
     public List<Story> findStoriesByTopicID(@Positive long topicID) {
 
@@ -298,6 +377,14 @@ public class StoryService {
 
 
 
+    /**
+     * Submit the specified Story, set it's state to {@link StoryState#SUBMITTED SUBMITTED}
+     * IF AND ONLY IF it's state had been {@link StoryState#CREATED CREATED} <br>
+     *
+     * Usable only by Journalist
+     *
+     * @param id ID of the specified Story
+     */
     @PreAuthorize("hasAuthority('ROLE_JOURNALIST')")
     public void submitStory(@Positive long id) {
 
@@ -326,6 +413,15 @@ public class StoryService {
 
 
 
+    /**
+     * Reject the specified Story, set it's state to {@link StoryState#CREATED CREATED}
+     * IF AND ONLY IF it's state had been {@link StoryState#SUBMITTED SUBMITTED} <br>
+     *
+     * Usable only by Curators
+     *
+     * @param id ID of the specified Story
+     * @param rejectionReason Reason the specified Story was rejected
+     */
     @PreAuthorize("hasAuthority('ROLE_CURATOR')")
     public void rejectStory(@Positive long id, @NotBlank  String rejectionReason) {
 
@@ -358,6 +454,14 @@ public class StoryService {
 
 
 
+    /**
+     * Approve the specified Story, set it's state to {@link StoryState#APPROVED APPROVED}
+     * IF AND ONLY IF it's state had been {@link StoryState#SUBMITTED SUBMITTED} <br>
+     *
+     * Usable only by Curators
+     *
+     * @param id ID of the specified Story
+     */
     @PreAuthorize("hasAuthority('ROLE_CURATOR')")
     public void approveStory(@Positive long id) {
 
@@ -390,6 +494,14 @@ public class StoryService {
 
 
 
+    /**
+     * Publish the specified Story, set it's state to {@link StoryState#PUBLISHED PUBLISHED}
+     * IF AND ONLY IF it's state had been {@link StoryState#APPROVED APPROVED} <br>
+     *
+     * Usable only by Curators
+     *
+     * @param id ID of the specified Story
+     */
     @PreAuthorize("hasAuthority('ROLE_CURATOR')")
     public void publishStory(@Positive long id) {
 

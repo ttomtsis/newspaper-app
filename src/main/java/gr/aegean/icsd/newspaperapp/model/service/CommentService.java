@@ -22,6 +22,10 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+/**
+ * Class servicing controller requests about
+ * the Comment entity
+ */
 @Service
 @Transactional
 @Validated
@@ -30,6 +34,9 @@ public class CommentService {
     private final CommentRepository commentRepository;
     private final StoryRepository storyRepository;
 
+    // Allowed Comment states per User, a User cannot access a
+    // Comment whose state is not in this List.
+    // ( Except the Journalist, in case he owns the Comment )
     private final Set<CommentState> allowedCuratorStates;
     private final Set <CommentState> allowedJournalistStates;
     private final Set <CommentState> allowedVisitorStates;
@@ -52,6 +59,12 @@ public class CommentService {
 
 
 
+    /**
+     * Creates a new Comment entity and persists it in the database
+     *
+     * @param storyID ID of the Story associated with the Comment
+     * @param content Content of the new Comment
+     */
     public void createComment(@NotNull @Positive Integer storyID, @NotBlank String content) {
 
         Optional<Story> parentStory = storyRepository.findById(Long.valueOf(storyID));
@@ -77,6 +90,12 @@ public class CommentService {
 
 
 
+    /**
+     * Updates the content of an existing Comment
+     *
+     * @param id ID of the Comment ot be updated
+     * @param content New content of the Comment
+     */
     @PreAuthorize("hasRole('ROLE_CURATOR')")
     public void updateComment(@Positive long id, @NotBlank String content) {
 
@@ -92,6 +111,12 @@ public class CommentService {
 
 
 
+    /**
+     * Approves the specified Comment, and set it's state equal to {@link CommentState#APPROVED APPROVED}
+     * IF AND ONLY IF the Comment's state has been {@link CommentState#SUBMITTED SUBMITTED}.
+     *
+     * @param id ID of the Comment that will be approved
+     */
     @PreAuthorize("hasRole('ROLE_CURATOR')")
     public void approveComment(@Positive long id) {
 
@@ -107,6 +132,12 @@ public class CommentService {
 
 
 
+    /**
+     * Reject the specified Comment, and delete it from the database,
+     * IF AND ONLY IF the Comment's state has been {@link CommentState#SUBMITTED SUBMITTED}.
+     *
+     * @param id ID of the Comment that will be deleted
+     */
     @PreAuthorize("hasRole('ROLE_CURATOR')")
     public void rejectComment(@Positive long id) {
 
@@ -121,6 +152,13 @@ public class CommentService {
 
 
 
+    /**
+     * Show all Comments associated with a Story
+     *
+     * @param storyId ID of the requested Story
+     *
+     * @return A list of all Comments associated with that Story
+     */
     @Transactional(readOnly = true)
     public List<Comment> showCommentsByStory(@Positive long storyId) {
 
@@ -142,5 +180,7 @@ public class CommentService {
         throw new AccessDeniedException("User with role: " + userRole + " is not supported by this operation");
 
     }
+
+
 
 }

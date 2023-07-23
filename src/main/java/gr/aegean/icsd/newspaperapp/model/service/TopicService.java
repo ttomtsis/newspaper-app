@@ -2,7 +2,6 @@ package gr.aegean.icsd.newspaperapp.model.service;
 
 import gr.aegean.icsd.newspaperapp.model.entity.Topic;
 import gr.aegean.icsd.newspaperapp.model.entity.User;
-import gr.aegean.icsd.newspaperapp.model.repository.StoryRepository;
 import gr.aegean.icsd.newspaperapp.model.repository.TopicRepository;
 import gr.aegean.icsd.newspaperapp.util.enums.TopicState;
 import jakarta.validation.constraints.NotBlank;
@@ -19,22 +18,27 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+/**
+ * Class servicing controller requests about
+ * the Topic entity
+ */
 @Service
 @Transactional
 @Validated
 public class TopicService {
 
-    private final StoryRepository storyRepository;
     private final TopicRepository topicRepository;
 
+    // Allowed Topic states per User, a User cannot access a
+    // Topic whose state is not in this List.
+    // ( Except the Journalist, in case he owns the Topic )
     private final Set<TopicState> allowedCuratorStates;
     private final Set <TopicState> allowedJournalistStates;
     private final Set <TopicState> allowedVisitorStates;
 
 
-    public TopicService(StoryRepository storyRepository, TopicRepository topicRepository) {
+    public TopicService(TopicRepository topicRepository) {
 
-        this.storyRepository = storyRepository;
         this.topicRepository = topicRepository;
 
         allowedCuratorStates = new HashSet<>();
@@ -51,6 +55,12 @@ public class TopicService {
 
 
 
+    /**
+     * Create a new Topic entity and persist it in the database
+     *
+     * @param name Name of the new Topic
+     * @param parentTopicID (Optional) Parent Topic of the new Topic
+     */
     @PreAuthorize("hasAnyAuthority('ROLE_CURATOR', 'ROLE_JOURNALIST')")
     public void createTopic(@NotBlank String name, Integer parentTopicID) {
 
@@ -81,8 +91,18 @@ public class TopicService {
     }
 
 
+
+    /**
+     * Updates the name and/or parent topic of the specified Topic
+     *
+     * @param id ID of the Topic to be updated
+     * @param newName New name of the Topic
+     * @param parentTopicID New parent Topic of the Topic
+     */
     @PreAuthorize("hasAnyAuthority('ROLE_CURATOR', 'ROLE_JOURNALIST')")
     public void updateTopic(@Positive long id, String newName, Integer parentTopicID) {
+
+        if (newName.isBlank() && parentTopicID == null) { throw new RuntimeException("No arguments provided"); }
 
         Optional<Topic> requestedTopic = topicRepository.findById(id);
         String userRole = SecurityContextHolder.getContext().getAuthentication().getAuthorities().toString();
@@ -116,6 +136,13 @@ public class TopicService {
     }
 
 
+
+    /**
+     * Approve the specified Topic, and set its status to {@link TopicState#APPROVED APPROVED}
+     * IF AND ONLY IF its status had been {@link TopicState#SUBMITTED}
+     *
+     * @param id ID of the Topic to be approved
+     */
     @PreAuthorize("hasAuthority('ROLE_CURATOR')")
     public void approveTopic(@Positive long id) {
 
@@ -136,6 +163,13 @@ public class TopicService {
     }
 
 
+
+    /**
+     * Reject a Topic and delete it from the database,
+     * IF AND ONLY IF it's state had been {@link TopicState#SUBMITTED}
+     *
+     * @param id ID of the Topic to be deleted
+     */
     @PreAuthorize("hasAuthority('ROLE_CURATOR')")
     public void rejectTopic(@Positive long id) {
 
@@ -154,6 +188,14 @@ public class TopicService {
     }
 
 
+
+    /**
+     * Show details about a specific Topic
+     *
+     * @param topicID ID of the specified Topic
+     *
+     * @return Requested Topic entity
+     */
     @Transactional(readOnly = true)
     public Topic showTopic(@Positive long topicID) {
 
@@ -179,6 +221,12 @@ public class TopicService {
     }
 
 
+
+    /**
+     * Show all Topics currently persisted in the database
+     *
+     * @return A list of all Topics currently in the database
+     */
     @Transactional(readOnly = true)
     public List<Topic> showAllTopics() {
 
@@ -202,6 +250,14 @@ public class TopicService {
     }
 
 
+
+    /**
+     * Show all Topics whose name matches the provided name
+     *
+     * @param name Provided name
+     *
+     * @return List of all Topics matching the provided name
+     */
     @Transactional(readOnly = true)
     public List<Topic> searchTopicByName(@NotBlank String name) {
 
