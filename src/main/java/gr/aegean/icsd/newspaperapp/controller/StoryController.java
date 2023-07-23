@@ -72,7 +72,7 @@ public class StoryController {
 
         log.info("New 'create story' Request");
 
-        Story savedStory = service.createStory(newStory.getName(), newStory.getContent(), newStory.getTopics());
+        service.createStory(newStory.getName(), newStory.getContent(), newStory.getTopics());
 
         return new ResponseEntity<>(null, HttpStatus.CREATED);
 
