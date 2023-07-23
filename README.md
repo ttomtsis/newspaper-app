@@ -24,7 +24,8 @@ Java Spring Boot application that exposes a RESTful API servicing the day to day
 * Java 17
 * Spring Boot 3.1
 * Spring Security 6.1
-* Hibernate ORM 6
+* Hibernate ORM 6.2
+* JUnit 5
 
 # Getting Started
 This project is still in the early stages of development and considered very immature, however if you want to 
