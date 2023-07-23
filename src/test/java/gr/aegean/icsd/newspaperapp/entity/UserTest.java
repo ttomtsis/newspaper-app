@@ -20,7 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.Collections;
 import java.util.stream.Stream;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @ExtendWith(SpringExtension.class)
 @DataJpaTest
@@ -50,11 +50,7 @@ public class UserTest {
 
             User testUser = new User("validUsername", "validPassword", type);
 
-            assertNull(testUser.getId());
-
             entityManager.persistAndFlush(testUser);
-
-            assertNotNull(testUser.getId());
 
         }
 

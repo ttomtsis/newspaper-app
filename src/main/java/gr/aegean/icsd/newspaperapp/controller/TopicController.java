@@ -12,6 +12,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 /**
  * Controller that handles requests related to the 'Topic' resource. <br>
  * Maps all operations at 'api/v0/topics' <br>
@@ -27,6 +29,7 @@ public class TopicController {
     private static final String defaultPageSize = "10";
     private static final Logger log = LoggerFactory.getLogger("TopicController");
 
+
     /**
      * Sole constructor, never used implicitly <br>
      * Instantiates the TopicService, to forward requests to the service layer
@@ -41,6 +44,8 @@ public class TopicController {
         this.assembler = topicModelAssembler;
     }
 
+
+
     /**
      * Creates a new Topic entity in the database. <br>
      * Only user roles 'JOURNALIST' and 'CURATOR' may use this operation
@@ -49,10 +54,16 @@ public class TopicController {
      * @return a TopicModel representing the newly created resource.
      */
     @PostMapping(consumes = "application/json", produces = "application/json")
-    public ResponseEntity<TopicModel> createTopic(@RequestBody Topic newTopic) {
+    public ResponseEntity<TopicModel> createTopic(@RequestBody TopicModel newTopic) {
+
         log.info("New 'create topic' Request");
+
+        service.createTopic(newTopic.getName(), newTopic.getParentTopicID());
+
         return new ResponseEntity<>(null, HttpStatus.CREATED);
     }
+
+
 
     /**
      * Updates a specific topic <br>
@@ -62,10 +73,16 @@ public class TopicController {
      * @return {@link org.springframework.http.HttpStatus#NO_CONTENT 204 Status Code}
      */
     @PutMapping(path = "/{id}", consumes = "application/json")
-    public ResponseEntity<Void> updateTopic(@PathVariable long id, @RequestBody Topic updatedTopic) {
+    public ResponseEntity<Void> updateTopic(@PathVariable long id, @RequestBody TopicModel updatedTopic) {
+
         log.info("New 'update topic' Request");
+
+        service.updateTopic(id, updatedTopic.getName(), updatedTopic.getParentTopicID());
+
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
+
+
 
     /**
      * Display a specific topic <br>
@@ -75,9 +92,16 @@ public class TopicController {
      */
     @GetMapping(path = "/{id}")
     public ResponseEntity<TopicModel> showTopic(@PathVariable long id) {
+
         log.info("New 'show topic' Request");
+        Topic requestedTopic = service.showTopic(id);
+
+        log.error(requestedTopic.getName() + " - " + requestedTopic.getState());
+
         return new ResponseEntity<>(null, HttpStatus.OK);
     }
+
+
 
     /**
      * Display all topics saved in the database
@@ -88,9 +112,18 @@ public class TopicController {
     @GetMapping
     public ResponseEntity<PagedModel<TopicModel>> showAllTopics(@RequestParam(defaultValue = "0") int page,
                                                                 @RequestParam(defaultValue = defaultPageSize) int size) {
+
         log.info("New 'show all topics' Request");
+        List<Topic> topicsList = service.showAllTopics();
+
+        for (Topic topic : topicsList) {
+            log.error(topic.getName() + " - " + topic.getState());
+        }
+
         return new ResponseEntity<>(null, HttpStatus.OK);
     }
+
+
 
     /**
      * Display all topics matching the provided name.
@@ -103,14 +136,18 @@ public class TopicController {
     public ResponseEntity<PagedModel<TopicModel>> showAllTopicsByName(@RequestParam String name,
                                                                 @RequestParam(defaultValue = "0") int page,
                                                                 @RequestParam(defaultValue = defaultPageSize) int size) {
-        if ( name != null ) {
-            log.info("New 'show all topics matching name' Request");
+
+        log.info("New 'show all topics matching name' Request");
+        List<Topic> topicsList = service.searchTopicByName(name);
+
+        for (Topic topic : topicsList) {
+            log.error(topic.getName() + " - " + topic.getState());
         }
-        else {
-            log.info("New 'show all topics' Request");
-        }
+
         return new ResponseEntity<>(null, HttpStatus.OK);
     }
+
+
 
     /**
      * Update the state of a Topic to {@link TopicState#APPROVED APPROVED} <br>
@@ -128,9 +165,15 @@ public class TopicController {
      */
     @PatchMapping("/{id}")
     public ResponseEntity<Void> approveTopic(@PathVariable long id) {
-        log.info("New 'update topic state' Request");
+
+        log.info("New 'approve topic state' Request");
+
+        service.approveTopic(id);
+
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
+
+
 
     /**
      * Delete a Topic. ( When a Topic is rejected it is automatically deleted )
@@ -139,8 +182,13 @@ public class TopicController {
      */
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> rejectTopic(@PathVariable long id) {
-        log.info("New 'delete topic' Request");
+
+        log.info("New 'reject topic' Request");
+
+        service.rejectTopic(id);
+
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
+
 
 }

@@ -24,37 +24,15 @@ import java.util.Set;
 @Table(name = "users")
 public class User implements UserDetails {
 
-    /**
-     * Sets the maximum allowed length of the User's username
-     *
-     * @see #username
-     */
     @Transient
     private final int maximumUsernameLength = 50;
 
-    /**
-     * Sets the minimum allowed length of the User's username
-     *
-     * @see #username
-     */
     @Transient
     private final int minimumUsernameLength = 3;
 
-    /**
-     * Sets the minimum allowed length of the User's password
-     *
-     * @see #username
-     */
     @Transient
     private final int minimumPasswordLength = 5;
 
-    /**
-     * Sets the maximum allowed length of the User's password <br>
-     *
-     * Equal to the maximum varchar size MySQL can accommodate ( 255 )
-     *
-     * @see #password
-     */
     @Transient
     private final int maximumPasswordLength = 255;
 
@@ -143,6 +121,7 @@ public class User implements UserDetails {
             cascade = {CascadeType.REFRESH, CascadeType.REMOVE}, orphanRemoval = true)
     private final Set<Topic> topicsList = new HashSet<>();
 
+
     /**
      * User constructor, used to create User entities that will be persisted
      * in the database <br>
@@ -155,9 +134,22 @@ public class User implements UserDetails {
         this.username = username;
         this.password = password;
         this.accountEnabled = true;
+        this.accountNonLocked = true;
+        this.accountNonExpired = true;
+        this.credentialsNonExpired = true;
 
         String userRole = "ROLE_" + role.toString();
         authorities.add(new SimpleGrantedAuthority(userRole));
+    }
+
+    /**
+     * Used to satisfy foreign key constraints prior to persisting a new
+     * entity in the database
+     *
+     * @param username Name of the User persisted in the database
+     */
+    public User(String username) {
+        this.username = username;
     }
 
     public User() {}
@@ -266,4 +258,5 @@ public class User implements UserDetails {
         return false;
 
     }
+
 }

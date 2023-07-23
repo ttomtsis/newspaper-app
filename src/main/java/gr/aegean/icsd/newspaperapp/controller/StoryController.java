@@ -13,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Date;
+import java.util.List;
 
 /**
  * Controller that handles requests related to the 'Story' resource. <br>
@@ -41,6 +42,8 @@ public class StoryController {
      endpoints that include a page as their response */
     private static final String defaultPageSize = "10";
 
+
+
     /**
      * Sole constructor, never used implicitly <br>
      * Instantiates the StoryService, to forward requests to the service layer
@@ -55,18 +58,27 @@ public class StoryController {
         this.assembler = storyModelAssembler;
     }
 
+
+
     /**
      * Creates a new Story entity in the database. <br>
-     * Only user roles 'JOURNALIST' and 'CURATOR' may use this operation
+     * Only user role 'JOURNALIST' may use this operation
      *
-     * @param newStory The comment object to be saved in the database
+     * @param newStory The StoryModel object, representing the Story that will be saved in the database
      * @return a StoryModel representing the newly created resource.
      */
     @PostMapping(path = baseMapping, consumes = "application/json", produces = "application/json")
-    public ResponseEntity<StoryModel> createStory(@RequestBody Story newStory) {
+    public ResponseEntity<StoryModel> createStory(@RequestBody StoryModel newStory) {
+
         log.info("New 'create story' Request");
+
+        service.createStory(newStory.getName(), newStory.getContent(), newStory.getTopics());
+
         return new ResponseEntity<>(null, HttpStatus.CREATED);
+
     }
+
+
 
     /**
      * Update a Story.
@@ -76,61 +88,174 @@ public class StoryController {
      * @return {@link org.springframework.http.HttpStatus#NO_CONTENT 204 Status Code}
      */
     @PutMapping(path = baseMapping + "/{id}", consumes = "application/json")
-    public ResponseEntity<Void> updateStory(@PathVariable long id, @RequestBody Story updatedStory) {
+    public ResponseEntity<Void> updateStory(@PathVariable long id, @RequestBody StoryModel updatedStory) {
+
         log.info("New 'update story' Request");
+
+        service.updateStory(id, updatedStory.getName(), updatedStory.getContent(), updatedStory.getTopics());
+
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+
     }
 
+
+
     /**
-     * Delete a Story.
+     * Show all Stories, sorted by their state
      *
-     * @param id the id of the Story entity that is going to be deleted
-     * @return {@link org.springframework.http.HttpStatus#NO_CONTENT 204 Status Code}
-     */
-    @DeleteMapping(path = baseMapping + "/{id}")
-    public ResponseEntity<Void> deleteStory(@PathVariable long id) {
-        log.info("New 'delete story' Request");
-        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-    }
-
-    /**
-     * Shows all Stories saved in the database, can optionally use one of the filters listed below: <br>
-     * 1) Filter by name and/or content <br>
-     * 2) Filter by state and/or a date range <br>
-     * @param name Will filter stories according to this name
-     * @param content Will filter stories according to this content
-     * @param state Will filter stories according to this state
-     * @param minDate Will filter stories according to this range of dates, this is the earlier date
-     * @param maxDate Will filter stories according to this range of dates, this is the later date
-     * @param page Number of the page the client has requested
+     * @param page Requested page
      * @param size Size of the requested page
-     * @return PagedModel containing the Story representations as well as the links to navigate it
+     *
+     * @return A PagedModel with the Stories
      */
-    // Also check GitHub Issue #9 : Rewrite Story Controller method: showAllStoriesFiltered
-    // https://github.com/ttomtsis/newspaper-app/issues/9
     @GetMapping(value = baseMapping, produces = "application/json")
-    public ResponseEntity<PagedModel<StoryModel>> showAllStoriesFiltered(@RequestParam(required = false) String name,
-                                                                         @RequestParam(required = false) String content,
-                                                                         @RequestParam(required = false) Date minDate,
-                                                                         @RequestParam(required = false) Date maxDate,
-                                                                         @RequestParam(required = false) StoryState state,
-                                                                         @RequestParam(defaultValue = "0") int page,
-                                                                         @RequestParam(defaultValue = defaultPageSize) int size){
-        if (name != null || content != null) {
-            log.info("New 'show all stories filtered by name and/or content' Request");
+    public ResponseEntity<PagedModel<StoryModel>> showAllStories(@RequestParam(defaultValue = "0") int page,
+                                                                 @RequestParam(defaultValue = defaultPageSize) int size) {
+
+        log.info("New 'show all stories' Request");
+        List<Story> storyList = service.findAllStories();
+
+        for (Story s : storyList){
+            log.error(s.getName() +" - " + s.getState() + " - " + s.getAuthor().getUsername());
         }
-        else if (state != null || minDate != null && maxDate != null) {
-            log.info("New 'show all stories filtered by state and/or date range' Request");
-        }
-        else if (state == null && name == null && content == null && minDate == null && maxDate == null) {
-            log.info("New 'show all stories' Request");
-        }
-        else {
-            log.error("Malformed Request in showAllStoriesFiltered");
-            throw new RuntimeException("Malformed request");
-        }
+
         return new ResponseEntity<>(null, HttpStatus.OK);
     }
+
+
+
+    /**
+     * Show all Stories whose name is similar to the provided name
+     *
+     * @param name Provided name
+     * @param page Requested page
+     * @param size Size of the requested page
+     *
+     * @return A PagedModel with the Stories
+     */
+    @GetMapping(value = baseMapping, produces = "application/json", params = "name")
+    public ResponseEntity<PagedModel<StoryModel>> showAllStoriesByName(@RequestParam String name,
+                                                                       @RequestParam(defaultValue = "0") int page,
+                                                                       @RequestParam(defaultValue = defaultPageSize) int size) {
+
+        log.info("New 'show all stories filtered by name' Request");
+        List<Story> storyList = service.findStoriesByName(name);
+
+        for (Story s : storyList){
+            log.error(s.getName() +" - " + s.getState() + " - " + s.getAuthor().getUsername());
+        }
+
+        return new ResponseEntity<>(null, HttpStatus.OK);
+    }
+
+
+
+    /**
+     * Show all Stories whose content is similar to the provided content
+     *
+     * @param content Provided content
+     * @param page Requested page
+     * @param size Size of the requested page
+     *
+     * @return A PagedModel with the Stories
+     */
+    @GetMapping(value = baseMapping, produces = "application/json", params = "content")
+    public ResponseEntity<PagedModel<StoryModel>> showAllStoriesByContent(@RequestParam String content,
+                                                                          @RequestParam(defaultValue = "0") int page,
+                                                                          @RequestParam(defaultValue = defaultPageSize) int size) {
+
+        log.info("New 'show all stories filtered by content' Request");
+        List<Story> storyList = service.findStoriesByContent(content);
+
+        for (Story s : storyList){
+            log.error(s.getName() +" - " + s.getState() + " - " + s.getAuthor().getUsername());
+        }
+
+        return new ResponseEntity<>(null, HttpStatus.OK);
+    }
+
+
+
+    /**
+     * Show all Stories whose name and content is similar to the provided content
+     *
+     * @param name Provided name
+     * @param content Provided content
+     * @param page Requested page
+     * @param size Size of the requested page
+     *
+     * @return A PagedModel with the Stories
+     */
+    @GetMapping(value = baseMapping, produces = "application/json", params = {"content","name"})
+    public ResponseEntity<PagedModel<StoryModel>> showAllStoriesByNameAndContent(@RequestParam String name,
+                                                                                 @RequestParam String content,
+                                                                                 @RequestParam(defaultValue = "0") int page,
+                                                                                 @RequestParam(defaultValue = defaultPageSize) int size) {
+
+        log.info("New 'show all stories filtered by content and name' Request");
+        List<Story> storyList = service.findStoriesByContentAndName(name, content);
+
+        for (Story s : storyList){
+            log.error(s.getName() +" - " + s.getState() + " - " + s.getAuthor().getUsername());
+        }
+
+        return new ResponseEntity<>(null, HttpStatus.OK);
+    }
+
+
+
+    /**
+     * Show all Stories whose creation date is between the provided dates
+     *
+     * @param minDate Provided date, starting point
+     * @param maxDate Provided date, ending point
+     * @param page Requested page
+     * @param size Size of the requested page
+     *
+     * @return A PagedModel with the Stories
+     */
+    @GetMapping(value = baseMapping, produces = "application/json", params = {"minDate","maxDate"})
+    public ResponseEntity<PagedModel<StoryModel>> showAllStoriesByDate(@RequestParam Date minDate,
+                                                                       @RequestParam Date maxDate,
+                                                                       @RequestParam(defaultValue = "0") int page,
+                                                                       @RequestParam(defaultValue = defaultPageSize) int size) {
+
+        log.info("New 'show all stories filtered by a range of dates' Request");
+        List<Story> storyList = service.findStoriesByDateRange(minDate, maxDate);
+
+        for (Story s : storyList){
+            log.error(s.getName() +" - " + s.getCreationDate() + " - " + s.getAuthor().getUsername() );
+        }
+
+        return new ResponseEntity<>(null, HttpStatus.OK);
+    }
+
+
+
+    /**
+     * Show all Stories whose state matches the provided state
+     *
+     * @param state Provided state
+     * @param page Requested page
+     * @param size Size of the page
+     *
+     * @return A PagedModel with the Stories
+     */
+    @GetMapping(value = baseMapping, produces = "application/json", params = {"state"})
+    public ResponseEntity<PagedModel<StoryModel>> showAllStoriesByState(@RequestParam StoryState state,
+                                                                        @RequestParam(defaultValue = "0") int page,
+                                                                        @RequestParam(defaultValue = defaultPageSize) int size) {
+
+        log.info("New 'show all stories filtered by state' Request");
+        List<Story> storyList = service.findStoriesByState(state);
+
+        for (Story s : storyList){
+            log.error(s.getName() +" - " + s.getState() + " - " + s.getAuthor().getUsername() );
+        }
+
+        return new ResponseEntity<>(null, HttpStatus.OK);
+    }
+
 
 
     /**
@@ -146,12 +271,40 @@ public class StoryController {
                                                                     @RequestParam(defaultValue = "0") int page,
                                                                     @RequestParam(defaultValue = defaultPageSize) int size) {
         log.info("New 'show a topic's stories' Request");
+        List<Story> storyList = service.findStoriesByTopicID(topicId);
+
+        for (Story s : storyList){
+            log.error(s.getName() +" - " + s.getState() + " - " + s.getAuthor().getUsername() );
+        }
+
         return new ResponseEntity<>(null, HttpStatus.OK);
     }
+
+
+
     /**
-     * Update the state of a Story <br>
-     * Valid Story states are defined in the {@link StoryState} enum
-     * @see gr.aegean.icsd.newspaperapp.util.enums.StoryState
+     * Submit the specified Story <br>
+     *
+     * @param id The id of the Story whose state will be updated
+     * @param state The new state of the Story
+     * @return {@link org.springframework.http.HttpStatus#NO_CONTENT 204 Status Code}
+     */
+    // Also check GitHub Issue #10 : Implement PATCH method properly
+    // https://github.com/ttomtsis/newspaper-app/issues/10
+    @PatchMapping(value = baseMapping + "/{id}", params = "state=SUBMITTED")
+    public ResponseEntity<Void> submitStory(@PathVariable long id, @RequestParam StoryState state) {
+
+        log.info("New 'submit story' Request");
+
+        service.submitStory(id);
+
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    }
+
+
+
+    /**
+     * Reject the specified Story <br>
      *
      * @param id The id of the Story whose state will be updated
      * @param state The new state of the Story
@@ -160,10 +313,59 @@ public class StoryController {
      */
     // Also check GitHub Issue #10 : Implement PATCH method properly
     // https://github.com/ttomtsis/newspaper-app/issues/10
-    @PatchMapping(value = baseMapping + "/{id}")
-    public ResponseEntity<Void> updateStoryState(@PathVariable long id, @RequestParam StoryState state,
-                                                 @RequestBody(required = false) String rejectionReason) {
-        log.info("New 'update a story's state' Request");
+    @PatchMapping(value = baseMapping + "/{id}", params = {"state=CREATED"})
+    public ResponseEntity<Void> rejectStory(@PathVariable long id, @RequestParam StoryState state,
+                                            @RequestBody String rejectionReason) {
+
+        log.info("New 'reject story' Request");
+
+        service.rejectStory(id, rejectionReason);
+
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
+
+
+
+    /**
+     * Approves the specified Story <br>
+     *
+     * @param id The id of the Story whose state will be updated
+     * @param state The new state of the Story
+     * @return {@link org.springframework.http.HttpStatus#NO_CONTENT 204 Status Code}
+     */
+    // Also check GitHub Issue #10 : Implement PATCH method properly
+    // https://github.com/ttomtsis/newspaper-app/issues/10
+    @PatchMapping(value = baseMapping + "/{id}", params = "state=APPROVED")
+    public ResponseEntity<Void> approveStory(@PathVariable long id, @RequestParam StoryState state) {
+
+        log.info("New 'approve story' Request");
+
+        service.approveStory(id);
+
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    }
+
+
+
+    /**
+     * Publish the specified Story <br>
+     *
+     * @param id The id of the Story whose state will be updated
+     * @param state The new state of the Story
+     * @return {@link org.springframework.http.HttpStatus#NO_CONTENT 204 Status Code}
+     */
+    // Also check GitHub Issue #10 : Implement PATCH method properly
+    // https://github.com/ttomtsis/newspaper-app/issues/10
+    @PatchMapping(value = baseMapping + "/{id}", params = "state=PUBLISHED")
+    public ResponseEntity<Void> publishStory(@PathVariable long id, @RequestParam StoryState state) {
+
+        log.info("New 'publish story' Request");
+
+        service.publishStory(id);
+
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    }
+
+
+
 }

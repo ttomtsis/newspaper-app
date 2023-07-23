@@ -380,7 +380,7 @@ public class CommentTest {
 
             entityManager.clear();
             story = entityManager.find(Story.class, story.getId());
-            author = entityManager.find(User.class, author.getId());
+            author = entityManager.find(User.class, author.getUsername());
 
             assertAll(
                     () -> assertNull(entityManager.find(Comment.class, testComment.getId()),
@@ -389,7 +389,7 @@ public class CommentTest {
                     () -> assertNotNull(entityManager.find(Story.class, story.getId()),
                             "Story shouldn't have been deleted"),
 
-                    () -> assertNotNull(entityManager.find(User.class, author.getId()),
+                    () -> assertNotNull(entityManager.find(User.class, author.getUsername()),
                             "User shouldn't have been deleted"),
 
                     () -> assertEquals(1, story.getComments().size(),

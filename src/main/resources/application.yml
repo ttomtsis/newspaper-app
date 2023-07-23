@@ -1,8 +1,15 @@
+# Passwords used by the test user accounts
+users:
+  testCuratorPassword: ${testCuratorPassword}
+  testJournalistPassword: ${testJournalistPassword}
+
+
 logging:
   level:
     org:
       springframework:
-        security: TRACE
+        security: DEBUG
+
 
 spring:
   datasource:
@@ -27,6 +34,7 @@ spring:
           issuer-uri: ${PROVIDER_URI}
           jwk-set-uri: ${PROVIDER_JWKS}
           audiences: ${AUDIENCES}
+
 
 server:
   ssl:

@@ -195,7 +195,7 @@ public class Story {
             this.state = StoryState.CREATED;
         }
         else {
-            throw new IllegalArgumentException("You must provide at least 1 Topic");
+            throw new IllegalArgumentException("You must provide at least 1 Valid Topic");
         }
 
     }
@@ -232,6 +232,13 @@ public class Story {
     }
     
     public Story(){}
+
+    /**
+     * Used to satisfy hibernate's foreign key constraints
+     */
+    public Story(Long storyID) {
+        this.id = storyID;
+    }
 
     /**
      * Generates the {@link #creationDate creationDate} of the Story <br>
@@ -386,6 +393,14 @@ public class Story {
     // UTILITY
 
     /**
+     * When a Story has been approved after a failed submission,
+     * set the rejection reason to null <br>
+     */
+    public void removeRejectionReason() {
+        this.rejectionReason = null;
+    }
+
+    /**
      * Adds a Topic to the Topic list <br>
      *
      * @param newTopic Topic to be added
@@ -412,6 +427,24 @@ public class Story {
      */
     public void removeTopic(Topic topic) {
         this.topicsList.remove(topic);
+    }
+
+    /**
+     * Updates the Topics of the current Story according to the Topics
+     * of a new topicsList <br>
+     *
+     * @param newTopics New topicsList containing all the new Topics
+     */
+    public void updateTopics(Set<Topic> newTopics) {
+
+        if (newTopics != null) {
+            this.topicsList.clear();
+            this.topicsList.addAll(newTopics);
+        }
+        else {
+            throw new IllegalArgumentException("Updated Topics List cannot be null");
+        }
+
     }
 
     /**
