@@ -78,7 +78,7 @@ public class CommentService {
 
 
     @PreAuthorize("hasRole('ROLE_CURATOR')")
-    public void updateComment(long id, @NotBlank String content) {
+    public void updateComment(@Positive long id, @NotBlank String content) {
 
         Optional<Comment> requestedComment = commentRepository.findById(id);
 
@@ -93,7 +93,7 @@ public class CommentService {
 
 
     @PreAuthorize("hasRole('ROLE_CURATOR')")
-    public void approveComment(long id) {
+    public void approveComment(@Positive long id) {
 
         Optional<Comment> requestedComment = commentRepository.findById(id);
 
@@ -108,7 +108,7 @@ public class CommentService {
 
 
     @PreAuthorize("hasRole('ROLE_CURATOR')")
-    public void rejectComment(long id) {
+    public void rejectComment(@Positive long id) {
 
         if (commentRepository.existsById(id)) {
             commentRepository.deleteById(id);
@@ -119,8 +119,10 @@ public class CommentService {
 
     }
 
+
+
     @Transactional(readOnly = true)
-    public List<Comment> showCommentsByStory(long storyId) {
+    public List<Comment> showCommentsByStory(@Positive long storyId) {
 
         String userRole = SecurityContextHolder.getContext().getAuthentication().getAuthorities().toString();
 
