@@ -7,12 +7,16 @@ import gr.aegean.icsd.newspaperapp.model.service.TopicService;
 import gr.aegean.icsd.newspaperapp.util.enums.TopicState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.hateoas.PagedModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
-import java.util.List;
+import java.net.URI;
 
 /**
  * Controller that handles requests related to the 'Topic' resource. <br>
@@ -58,9 +62,15 @@ public class TopicController {
 
         log.info("New 'create topic' Request");
 
-        service.createTopic(newTopic.getName(), newTopic.getParentTopicID());
+        Topic savedTopic = service.createTopic(newTopic.getName(), newTopic.getParentTopicID());
+        TopicModel savedTopicModel = assembler.toModel(savedTopic);
 
-        return new ResponseEntity<>(null, HttpStatus.CREATED);
+        URI location = ServletUriComponentsBuilder.fromCurrentContextPath()
+                .path("/{id}")
+                .buildAndExpand(savedTopic.getId())
+                .toUri();
+
+        return ResponseEntity.created(location).body(savedTopicModel);
     }
 
 
@@ -96,9 +106,9 @@ public class TopicController {
         log.info("New 'show topic' Request");
         Topic requestedTopic = service.showTopic(id);
 
-        log.error(requestedTopic.getName() + " - " + requestedTopic.getState());
+        TopicModel topicModel = assembler.toModel(requestedTopic);
 
-        return new ResponseEntity<>(null, HttpStatus.OK);
+        return new ResponseEntity<>(topicModel, HttpStatus.OK);
     }
 
 
@@ -114,13 +124,12 @@ public class TopicController {
                                                                 @RequestParam(defaultValue = defaultPageSize) int size) {
 
         log.info("New 'show all topics' Request");
-        List<Topic> topicsList = service.showAllTopics();
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Topic> topicsPage = service.showAllTopics(pageable);
 
-        for (Topic topic : topicsList) {
-            log.error(topic.getName() + " - " + topic.getState());
-        }
+        PagedModel<TopicModel> pagedTopicModel = assembler.createPagedModel(topicsPage);
 
-        return new ResponseEntity<>(null, HttpStatus.OK);
+        return new ResponseEntity<>(pagedTopicModel, HttpStatus.OK);
     }
 
 
@@ -138,13 +147,13 @@ public class TopicController {
                                                                 @RequestParam(defaultValue = defaultPageSize) int size) {
 
         log.info("New 'show all topics matching name' Request");
-        List<Topic> topicsList = service.searchTopicByName(name);
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Topic> topicsPage = service.searchTopicByName(name, pageable);
 
-        for (Topic topic : topicsList) {
-            log.error(topic.getName() + " - " + topic.getState());
-        }
+        PagedModel<TopicModel> pagedTopicModel = assembler.createPagedModelForSearchByName(topicsPage, name);
 
-        return new ResponseEntity<>(null, HttpStatus.OK);
+
+        return new ResponseEntity<>(pagedTopicModel, HttpStatus.OK);
     }
 
 
