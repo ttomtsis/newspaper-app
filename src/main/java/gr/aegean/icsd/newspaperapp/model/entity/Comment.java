@@ -243,7 +243,6 @@ public class Comment {
 
         if (obj instanceof Comment newComment) {
             return Objects.equals(this.id, newComment.getId())
-                    && Objects.equals(this.authorID, newComment.getAuthor().get())
                     && Objects.equals(this.creationDate, newComment.getCreationDate())
                     && Objects.equals(this.state, newComment.getState());
         }
