@@ -5,6 +5,7 @@ import gr.aegean.icsd.newspaperapp.model.entity.Story;
 import gr.aegean.icsd.newspaperapp.model.entity.User;
 import gr.aegean.icsd.newspaperapp.model.repository.CommentRepository;
 import gr.aegean.icsd.newspaperapp.model.repository.StoryRepository;
+import gr.aegean.icsd.newspaperapp.security.UserUtils;
 import gr.aegean.icsd.newspaperapp.util.enums.CommentState;
 import gr.aegean.icsd.newspaperapp.util.enums.StoryState;
 import jakarta.validation.constraints.NotBlank;
@@ -164,22 +165,19 @@ public class CommentService {
     @Transactional(readOnly = true)
     public Page<Comment> showCommentsByStory(@Positive long storyId, Pageable pageable) {
 
-        String userRole = SecurityContextHolder.getContext().getAuthentication().getAuthorities().toString();
-
-        switch (userRole) {
-            case "[ROLE_ANONYMOUS]" -> {
-                return commentRepository.findByStoryID(storyId, allowedVisitorStates, pageable);
-            }
-            case "[ROLE_JOURNALIST]" -> {
-                String username = SecurityContextHolder.getContext().getAuthentication().getName();
-                return commentRepository.findByStoryIDForJournalist(storyId, allowedJournalistStates, username, pageable);
-            }
-            case "[ROLE_CURATOR]" -> {
-                return commentRepository.findByStoryID(storyId, allowedCuratorStates, pageable);
-            }
+        if (UserUtils.isVisitor()) {
+            return commentRepository.findByStoryID(storyId, allowedVisitorStates, pageable);
+        }
+        else if (UserUtils.isJournalist()) {
+            String username = UserUtils.getUsername();
+            return commentRepository.findByStoryIDForJournalist(storyId, allowedJournalistStates, username, pageable);
+        }
+        else if (UserUtils.isCurator()) {
+            return commentRepository.findByStoryID(storyId, allowedCuratorStates, pageable);
         }
 
-        throw new AccessDeniedException("User with role: " + userRole + " is not supported by this operation");
+        throw new AccessDeniedException("User with role: " + UserUtils.getUsername()
+                + " is not supported by this operation");
 
     }
 
