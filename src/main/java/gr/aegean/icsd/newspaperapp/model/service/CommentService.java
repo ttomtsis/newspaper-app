@@ -67,7 +67,7 @@ public class CommentService {
      * @param storyID ID of the Story associated with the Comment
      * @param content Content of the new Comment
      */
-    public void createComment(@NotNull @Positive Integer storyID, @NotBlank String content) {
+    public Comment createComment(@NotNull @Positive Integer storyID, @NotBlank String content) {
 
         Optional<Story> parentStory = storyRepository.findById(Long.valueOf(storyID));
         String authorID = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -87,6 +87,7 @@ public class CommentService {
         }
 
         commentRepository.save(newComment);
+        return newComment;
 
     }
 

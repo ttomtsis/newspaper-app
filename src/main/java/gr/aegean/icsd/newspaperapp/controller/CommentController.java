@@ -14,6 +14,9 @@ import org.springframework.hateoas.PagedModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+
+import java.net.URI;
 
 /**
  * Controller that handles requests related to the 'Comment' resource. <br>
@@ -63,13 +66,20 @@ public class CommentController {
      * @return a CommentModel representing the newly created resource.
      */
     @PostMapping(path = baseMapping, consumes = "application/json", produces = "application/json")
-    public ResponseEntity<Void> createComment(@RequestBody CommentModel newComment) {
+    public ResponseEntity<CommentModel> createComment(@RequestBody CommentModel newComment) {
 
         log.info("New 'create comment' Request");
 
-        service.createComment(newComment.getStoryID(), newComment.getContent());
+        Comment savedComment = service.createComment(newComment.getStoryID(), newComment.getContent());
+        CommentModel savedCommentModel = assembler.toModel(savedComment);
 
-        return new ResponseEntity<>(HttpStatus.CREATED);
+        URI location = ServletUriComponentsBuilder.fromCurrentContextPath()
+                .path("api/v0/stories/{storyId}/comments")
+                .buildAndExpand(savedComment.getStory().getId())
+                .toUri();
+
+        return ResponseEntity.created(location).body(savedCommentModel);
+
     }
 
 
