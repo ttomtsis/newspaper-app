@@ -164,7 +164,7 @@ public class CommentService {
      * @return A list of all Comments associated with that Story
      */
     @Transactional(readOnly = true)
-    public Page<Comment> showCommentsByStory(@Positive long storyId, Pageable pageable) {
+    public Page<Comment> showCommentsByStory(@Positive long storyId, @NotNull Pageable pageable) {
 
         if (UserUtils.isVisitor()) {
             return commentRepository.findByStoryID(storyId, allowedVisitorStates, pageable);
