@@ -8,14 +8,16 @@ import java.util.Date;
 import java.util.List;
 
 /**
- *
+ * Representation Model of the Story Entity
  */
 public class StoryModel extends RepresentationModel<StoryModel> {
+
 
     /**
      * Primary Key of the Story Entity
      */
     private Long id;
+
 
     /**
      * Date the Story was created, assigned by the server
@@ -26,6 +28,7 @@ public class StoryModel extends RepresentationModel<StoryModel> {
      */
     private Date creationDate;
 
+
     /**
      * State of the Story, valid states are declared in
      * {@link StoryState}
@@ -34,12 +37,13 @@ public class StoryModel extends RepresentationModel<StoryModel> {
      */
     private StoryState state;
 
+
     /**
      * The name of the Story <br>
      *
      */
-    @JsonProperty("name")
     private String name;
+
 
     /**
      * Reason that a Story was rejected <br>
@@ -49,12 +53,13 @@ public class StoryModel extends RepresentationModel<StoryModel> {
      */
     private String rejectionReason;
 
+
     /**
      * The content of the Story <br>
      *
      */
-    @JsonProperty("content")
     private String content;
+
 
     /**
      * Comments associated with the Story. <br>
@@ -64,6 +69,7 @@ public class StoryModel extends RepresentationModel<StoryModel> {
      */
     private List<Integer> commentsList;
 
+
     /**
      * Author of the Story. <br>
      *
@@ -71,6 +77,7 @@ public class StoryModel extends RepresentationModel<StoryModel> {
      * Only one Author per Story is allowed
      */
     private String authorID;
+
 
     /**
      * Topics that this Story belongs to. <br>
@@ -80,6 +87,7 @@ public class StoryModel extends RepresentationModel<StoryModel> {
      */
     @JsonProperty("topicsList")
     private List<Integer> topicsList;
+
 
 
     public Long getId() {

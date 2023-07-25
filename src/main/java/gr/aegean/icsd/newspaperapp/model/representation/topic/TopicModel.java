@@ -6,11 +6,22 @@ import org.springframework.hateoas.RepresentationModel;
 import java.util.Date;
 import java.util.List;
 
+/**
+ * Representation Model of the Topic Entity
+ */
 public class TopicModel extends RepresentationModel<TopicModel> {
 
 
+    /**
+     * Primary key of the Topic entity
+     */
     private Long id;
 
+
+    /**
+     * Date the Topic was created, assigned by the server
+     * before persisting the entity in the database. <br>
+     */
     private Date creationDate;
 
 
@@ -22,8 +33,19 @@ public class TopicModel extends RepresentationModel<TopicModel> {
      */
     private TopicState state;
 
+
+    /**
+     * The name of the Topic <br>
+     */
     private String name;
 
+
+    /**
+     * Author of the Topic <br>
+     *
+     * Many Topics can have the same Author <br>
+     * Only one Author per Topic is allowed
+     */
     private String authorID;
 
 
@@ -43,6 +65,12 @@ public class TopicModel extends RepresentationModel<TopicModel> {
      */
     private List<Integer> topicsList;
 
+
+    /**
+     * Parent Topic of the Topic <br>
+     *
+     * Each Topic can be associated with a single parent Topic
+     */
     private Integer parentTopicID;
 
 
