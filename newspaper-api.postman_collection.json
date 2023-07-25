@@ -549,7 +549,7 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "https://localhost:8080/api/v0/stories?minDate=2019-07-20&maxDate=2021-07-20",
+							"raw": "https://localhost:8080/api/v0/stories?minDate=2019/07/11&maxDate=2041/07/11",
 							"protocol": "https",
 							"host": [
 								"localhost"
@@ -563,46 +563,11 @@
 							"query": [
 								{
 									"key": "minDate",
-									"value": "2019-07-20"
+									"value": "2019/07/11"
 								},
 								{
 									"key": "maxDate",
-									"value": "2021-07-20"
-								}
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Show all Stories by State and Date Range",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "https://localhost:8080/api/v0/stories?state=APPROVED&minDate=11/11/1111&maxDate=12/12/1212",
-							"protocol": "https",
-							"host": [
-								"localhost"
-							],
-							"port": "8080",
-							"path": [
-								"api",
-								"v0",
-								"stories"
-							],
-							"query": [
-								{
-									"key": "state",
-									"value": "APPROVED"
-								},
-								{
-									"key": "minDate",
-									"value": "11/11/1111"
-								},
-								{
-									"key": "maxDate",
-									"value": "12/12/1212"
+									"value": "2041/07/11"
 								}
 							]
 						}
