@@ -10,6 +10,8 @@ import org.springframework.hateoas.server.mvc.RepresentationModelAssemblerSuppor
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.List;
 
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
@@ -41,8 +43,16 @@ public class CommentModelAssembler extends RepresentationModelAssemblerSupport<C
         Long parentStoryID = entity.getStory().getId();
         newModel.setStoryID(parentStoryID.intValue());
 
-        newModel.add(linkTo(methodOn(CommentController.class)
-                .showAllCommentsForAStory(parentStoryID, 0, 10)).withSelfRel());
+        try {
+            newModel.add(linkTo(methodOn(CommentController.class)
+                    .showAllCommentsForAStory(parentStoryID, 0, 10)).withSelfRel());
+        } catch (NoSuchMethodException e) {
+            throw new RuntimeException(e);
+        } catch (InvocationTargetException e) {
+            throw new RuntimeException(e);
+        } catch (IllegalAccessException e) {
+            throw new RuntimeException(e);
+        }
 
         if (UserUtils.isCurator()) {
 
@@ -61,25 +71,69 @@ public class CommentModelAssembler extends RepresentationModelAssemblerSupport<C
         return newModel;
     }
 
-    public PagedModel<CommentModel> createPagedModel(Page<Comment> commentPage, long parentStoryID) {
+    public PagedModel<CommentModel> createPagedModel(Page<Comment> commentPage, long parentStoryID) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
 
         PagedModel<CommentModel> pagedModel = createPagedModelFromPage(commentPage);
 
-        pagedModel.add(linkTo(methodOn(CommentController.class).showAllCommentsForAStory(parentStoryID,
-                commentPage.getNumber(), commentPage.getSize())).withSelfRel());
+        pagedModel.add(linkTo(methodOn(CommentController.class)
+                .showAllCommentsForAStory
+                        (parentStoryID, commentPage.getNumber(), commentPage.getSize()))
+                .withSelfRel()
+        );
 
         if (commentPage.hasNext()) {
-            pagedModel.add(linkTo(methodOn(CommentController.class).showAllCommentsForAStory(parentStoryID,
-                    commentPage.getNumber() + 1, commentPage.getSize())).withRel("next"));
+            pagedModel.add(linkTo(methodOn(CommentController.class)
+                    .showAllCommentsForAStory
+                            (parentStoryID, commentPage.getNumber() + 1, commentPage.getSize()))
+                    .withRel("next")
+            );
         }
 
         if (commentPage.hasPrevious()) {
-            pagedModel.add(linkTo(methodOn(CommentController.class).showAllCommentsForAStory(parentStoryID,
-                    commentPage.getNumber() - 1, commentPage.getSize())).withRel("previous"));
+            pagedModel.add(linkTo(methodOn(CommentController.class)
+                    .showAllCommentsForAStory
+                            (parentStoryID, commentPage.getNumber() - 1, commentPage.getSize()))
+                    .withRel("previous")
+            );
         }
 
         return pagedModel;
     }
+
+
+    public PagedModel<CommentModel> GenerifiedCreatePagedModel(Page<Comment> commentPage,
+                                                               Method targetMethod,
+                                                               Object ... methodArgsCurrentPage)
+            throws InvocationTargetException, IllegalAccessException {
+
+        PagedModel<CommentModel> pagedModel = createPagedModelFromPage(commentPage);
+
+        pagedModel.add(linkTo(targetMethod
+                .invoke(methodOn
+                        (CommentController.class), 0, commentPage.getNumber(), commentPage.getSize()))
+                .withSelfRel()
+        );
+
+
+        if (commentPage.hasNext()) {
+            pagedModel.add(linkTo(targetMethod
+                            .invoke(methodOn
+                                    (CommentController.class), 0, commentPage.getNumber() + 1, commentPage.getSize()))
+                            .withSelfRel()
+            );
+        }
+
+        if (commentPage.hasPrevious()) {
+            pagedModel.add(linkTo(targetMethod
+                            .invoke(methodOn
+                                    (CommentController.class), 0, commentPage.getNumber() - 1, commentPage.getSize()))
+                            .withSelfRel()
+            );
+        }
+
+        return pagedModel;
+    }
+
 
     private PagedModel<CommentModel> createPagedModelFromPage ( Page<Comment> commentPage ) {
 

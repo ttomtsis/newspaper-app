@@ -16,6 +16,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.net.URI;
 
 /**
@@ -118,14 +120,19 @@ public class CommentController {
     @GetMapping(path = "api/v0/stories/{storyId}/comments", produces = "application/json")
     public ResponseEntity<PagedModel<CommentModel>> showAllCommentsForAStory(@PathVariable long storyId,
                                                                              @RequestParam(defaultValue = "0") int page,
-                                                                             @RequestParam(defaultValue = defaultPageSize) int size) {
+                                                                             @RequestParam(defaultValue = defaultPageSize) int size) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
 
         log.info("New 'show all comments for a story' Request");
         Pageable pageable = PageRequest.of(page, size);
 
         Page<Comment> commentList = service.showCommentsByStory(storyId, pageable);
 
-        PagedModel<CommentModel> commentPagedModel = assembler.createPagedModel(commentList, storyId);
+        Method thisMethod = CommentController.class.getMethod("showAllCommentsForAStory",
+                long.class,
+                int.class,
+                int.class);
+
+        PagedModel<CommentModel> commentPagedModel = assembler.GenerifiedCreatePagedModel(commentList, thisMethod);
 
         return new ResponseEntity<>(commentPagedModel, HttpStatus.OK);
     }
