@@ -5,11 +5,14 @@ import gr.aegean.icsd.newspaperapp.model.entity.Story;
 import gr.aegean.icsd.newspaperapp.model.entity.User;
 import gr.aegean.icsd.newspaperapp.model.repository.CommentRepository;
 import gr.aegean.icsd.newspaperapp.model.repository.StoryRepository;
+import gr.aegean.icsd.newspaperapp.security.UserUtils;
 import gr.aegean.icsd.newspaperapp.util.enums.CommentState;
 import gr.aegean.icsd.newspaperapp.util.enums.StoryState;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -18,7 +21,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.HashSet;
-import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -65,7 +67,7 @@ public class CommentService {
      * @param storyID ID of the Story associated with the Comment
      * @param content Content of the new Comment
      */
-    public void createComment(@NotNull @Positive Integer storyID, @NotBlank String content) {
+    public Comment createComment(@NotNull @Positive Integer storyID, @NotBlank String content) {
 
         Optional<Story> parentStory = storyRepository.findById(Long.valueOf(storyID));
         String authorID = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -85,6 +87,7 @@ public class CommentService {
         }
 
         commentRepository.save(newComment);
+        return newComment;
 
     }
 
@@ -155,29 +158,27 @@ public class CommentService {
     /**
      * Show all Comments associated with a Story
      *
-     * @param storyId ID of the requested Story
+     * @param storyId  ID of the requested Story
+     * @param pageable Details of the requested Page
      *
      * @return A list of all Comments associated with that Story
      */
     @Transactional(readOnly = true)
-    public List<Comment> showCommentsByStory(@Positive long storyId) {
+    public Page<Comment> showCommentsByStory(@Positive long storyId, @NotNull Pageable pageable) {
 
-        String userRole = SecurityContextHolder.getContext().getAuthentication().getAuthorities().toString();
-
-        switch (userRole) {
-            case "[ROLE_ANONYMOUS]" -> {
-                return commentRepository.findByStoryID(storyId, allowedVisitorStates);
-            }
-            case "[ROLE_JOURNALIST]" -> {
-                String username = SecurityContextHolder.getContext().getAuthentication().getName();
-                return commentRepository.findByStoryIDForJournalist(storyId, allowedJournalistStates, username);
-            }
-            case "[ROLE_CURATOR]" -> {
-                return commentRepository.findByStoryID(storyId, allowedCuratorStates);
-            }
+        if (UserUtils.isVisitor()) {
+            return commentRepository.findByStoryID(storyId, allowedVisitorStates, pageable);
+        }
+        else if (UserUtils.isJournalist()) {
+            String username = UserUtils.getUsername();
+            return commentRepository.findByStoryIDForJournalist(storyId, allowedJournalistStates, username, pageable);
+        }
+        else if (UserUtils.isCurator()) {
+            return commentRepository.findByStoryID(storyId, allowedCuratorStates, pageable);
         }
 
-        throw new AccessDeniedException("User with role: " + userRole + " is not supported by this operation");
+        throw new AccessDeniedException("User with role: " + UserUtils.getUsername()
+                + " is not supported by this operation");
 
     }
 

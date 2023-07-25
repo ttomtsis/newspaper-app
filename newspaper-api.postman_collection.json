@@ -13,11 +13,14 @@
 				{
 					"name": "Create Comment",
 					"request": {
+						"auth": {
+							"type": "noauth"
+						},
 						"method": "POST",
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{}",
+							"raw": "{\r\n    \"storyID\" : 1,\r\n    \"content\" : \"blah blah blah\"\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -25,8 +28,38 @@
 							}
 						},
 						"url": {
-							"raw": "http://localhost:8080/api/v0/comments",
-							"protocol": "http",
+							"raw": "https://localhost:8080/api/v0/comments",
+							"protocol": "https",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"v0",
+								"comments"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Comment with Author",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"storyID\" : 1,\r\n    \"content\" : \"I am an author :D\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://localhost:8080/api/v0/comments",
+							"protocol": "https",
 							"host": [
 								"localhost"
 							],
@@ -47,7 +80,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"content\" : \"sth sth\"\r\n}",
+							"raw": "{\r\n    \"content\" : \"I am updated!!\"\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -55,8 +88,8 @@
 							}
 						},
 						"url": {
-							"raw": "http://localhost:8080/api/v0/comments/1",
-							"protocol": "http",
+							"raw": "https://localhost:8080/api/v0/comments/1",
+							"protocol": "https",
 							"host": [
 								"localhost"
 							],
@@ -77,8 +110,8 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "http://localhost:8080/api/v0/stories/1/comments",
-							"protocol": "http",
+							"raw": "https://localhost:8080/api/v0/stories/1/comments",
+							"protocol": "https",
 							"host": [
 								"localhost"
 							],
@@ -109,8 +142,8 @@
 							}
 						},
 						"url": {
-							"raw": "http://localhost:8080/api/v0/comments/1",
-							"protocol": "http",
+							"raw": "https://localhost:8080/api/v0/comments/1",
+							"protocol": "https",
 							"host": [
 								"localhost"
 							],
@@ -131,8 +164,8 @@
 						"method": "DELETE",
 						"header": [],
 						"url": {
-							"raw": "http://localhost:8080/api/v0/comments/1",
-							"protocol": "http",
+							"raw": "https://localhost:8080/api/v0/comments/1",
+							"protocol": "https",
 							"host": [
 								"localhost"
 							],
@@ -153,13 +186,28 @@
 			"name": "Stories",
 			"item": [
 				{
-					"name": "Create Story",
+					"name": "Create Story with Topics",
 					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "password",
+									"value": "testJournalist",
+									"type": "string"
+								},
+								{
+									"key": "username",
+									"value": "testJournalist",
+									"type": "string"
+								}
+							]
+						},
 						"method": "POST",
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{}",
+							"raw": "{\r\n    \"name\": \"testStory12\",\r\n    \"content\": \"testContent\",\r\n    \"topicsList\": [3]\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -167,8 +215,53 @@
 							}
 						},
 						"url": {
-							"raw": "http://localhost:8080/api/v0/stories",
-							"protocol": "http",
+							"raw": "https://localhost:8080/api/v0/stories",
+							"protocol": "https",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"v0",
+								"stories"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Story",
+					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "password",
+									"value": "testJournalist",
+									"type": "string"
+								},
+								{
+									"key": "username",
+									"value": "testJournalist",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"name\": \"testStsory2\",\r\n    \"content\": \"testContent\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://localhost:8080/api/v0/stories",
+							"protocol": "https",
 							"host": [
 								"localhost"
 							],
@@ -184,12 +277,46 @@
 				},
 				{
 					"name": "Update Story",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var xsrfCookie = postman.getResponseCookie(\"XSRF-TOKEN\");\r",
+									"postman.setEnvironmentVariable(\"xsrf-token\", xsrfCookie.value);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
 					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "password",
+									"value": "testJournalist",
+									"type": "string"
+								},
+								{
+									"key": "username",
+									"value": "testJournalist",
+									"type": "string"
+								}
+							]
+						},
 						"method": "PUT",
-						"header": [],
+						"header": [
+							{
+								"key": "X-XSRF-TOKEN",
+								"value": "{{xsrf-token}}",
+								"type": "text",
+								"disabled": true
+							}
+						],
 						"body": {
 							"mode": "raw",
-							"raw": "{}",
+							"raw": "{\r\n    \"name\": \"Please, i am valid\",\r\n    \"content\": \"Please, i am valid :)\"\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -197,8 +324,8 @@
 							}
 						},
 						"url": {
-							"raw": "http://localhost:8080/api/v0/stories/1",
-							"protocol": "http",
+							"raw": "https://localhost:8080/api/v0/stories/1",
+							"protocol": "https",
 							"host": [
 								"localhost"
 							],
@@ -214,13 +341,56 @@
 					"response": []
 				},
 				{
-					"name": "Delete Story",
+					"name": "Update Story with Topics",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var xsrfCookie = postman.getResponseCookie(\"XSRF-TOKEN\");\r",
+									"postman.setEnvironmentVariable(\"xsrf-token\", xsrfCookie.value);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
 					"request": {
-						"method": "DELETE",
-						"header": [],
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "password",
+									"value": "testJournalist",
+									"type": "string"
+								},
+								{
+									"key": "username",
+									"value": "testJournalist",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [
+							{
+								"key": "X-XSRF-TOKEN",
+								"value": "{{xsrf-token}}",
+								"type": "text",
+								"disabled": true
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"name\": \"Please, i am valid\",\r\n    \"content\": \"Please, i am valid :)\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
 						"url": {
-							"raw": "http://localhost:8080/api/v0/stories/1",
-							"protocol": "http",
+							"raw": "https://localhost:8080/api/v0/stories/1",
+							"protocol": "https",
 							"host": [
 								"localhost"
 							],
@@ -241,8 +411,8 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "http://localhost:8080/api/v0/stories",
-							"protocol": "http",
+							"raw": "https://localhost:8080/api/v0/stories",
+							"protocol": "https",
 							"host": [
 								"localhost"
 							],
@@ -262,8 +432,8 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "http://localhost:8080/api/v0/stories?name=bob&content=my name is bruce!",
-							"protocol": "http",
+							"raw": "https://localhost:8080/api/v0/stories?name=test",
+							"protocol": "https",
 							"host": [
 								"localhost"
 							],
@@ -275,12 +445,13 @@
 							],
 							"query": [
 								{
-									"key": "name",
-									"value": "bob"
+									"key": "content",
+									"value": "test",
+									"disabled": true
 								},
 								{
-									"key": "content",
-									"value": "my name is bruce!"
+									"key": "name",
+									"value": "test"
 								}
 							]
 						}
@@ -293,8 +464,8 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "http://localhost:8080/api/v0/stories?content=my name is bruce!",
-							"protocol": "http",
+							"raw": "https://localhost:8080/api/v0/stories?content=my name is bruce!",
+							"protocol": "https",
 							"host": [
 								"localhost"
 							],
@@ -320,8 +491,8 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "http://localhost:8080/api/v0/stories?name=bob&content=my name is bruce!",
-							"protocol": "http",
+							"raw": "https://localhost:8080/api/v0/stories?name=bob&content=my name is bruce!",
+							"protocol": "https",
 							"host": [
 								"localhost"
 							],
@@ -351,8 +522,8 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "http://localhost:8080/api/v0/stories?state=APPROVED",
-							"protocol": "http",
+							"raw": "https://localhost:8080/api/v0/stories?state=APPROVED",
+							"protocol": "https",
 							"host": [
 								"localhost"
 							],
@@ -378,8 +549,8 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "http://localhost:8080/api/v0/stories?minDate=11/02/2014&maxDate=12/02/2015",
-							"protocol": "http",
+							"raw": "https://localhost:8080/api/v0/stories?minDate=2019/07/11&maxDate=2041/07/11",
+							"protocol": "https",
 							"host": [
 								"localhost"
 							],
@@ -392,46 +563,11 @@
 							"query": [
 								{
 									"key": "minDate",
-									"value": "11/02/2014"
+									"value": "2019/07/11"
 								},
 								{
 									"key": "maxDate",
-									"value": "12/02/2015"
-								}
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Show all Stories by State and Date Range",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "http://localhost:8080/api/v0/stories?state=APPROVED&minDate=11/11/1111&maxDate=12/12/1212",
-							"protocol": "http",
-							"host": [
-								"localhost"
-							],
-							"port": "8080",
-							"path": [
-								"api",
-								"v0",
-								"stories"
-							],
-							"query": [
-								{
-									"key": "state",
-									"value": "APPROVED"
-								},
-								{
-									"key": "minDate",
-									"value": "11/11/1111"
-								},
-								{
-									"key": "maxDate",
-									"value": "12/12/1212"
+									"value": "2041/07/11"
 								}
 							]
 						}
@@ -444,8 +580,8 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "http://localhost:8080/api/v0/topics/1/stories",
-							"protocol": "http",
+							"raw": "https://localhost:8080/api/v0/topics/1/stories",
+							"protocol": "https",
 							"host": [
 								"localhost"
 							],
@@ -462,13 +598,98 @@
 					"response": []
 				},
 				{
-					"name": "Update a Story's state",
+					"name": "Submit Story",
+					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "password",
+									"value": "testJournalist",
+									"type": "string"
+								},
+								{
+									"key": "username",
+									"value": "testJournalist",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PATCH",
+						"header": [],
+						"url": {
+							"raw": "https://localhost:8080/api/v0/stories/1?state=SUBMITTED",
+							"protocol": "https",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"v0",
+								"stories",
+								"1"
+							],
+							"query": [
+								{
+									"key": "state",
+									"value": "SUBMITTED"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Reject Story",
+					"request": {
+						"method": "PATCH",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "Random rejection reason\r\n",
+							"options": {
+								"raw": {
+									"language": "text"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://localhost:8080/api/v0/stories/1?state=CREATED",
+							"protocol": "https",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"v0",
+								"stories",
+								"1"
+							],
+							"query": [
+								{
+									"key": "state",
+									"value": "CREATED"
+								},
+								{
+									"key": "rejectionReason",
+									"value": "blabla",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Approve Story",
 					"request": {
 						"method": "PATCH",
 						"header": [],
 						"url": {
-							"raw": "http://localhost:8080/api/v0/stories/1?state=APPROVED",
-							"protocol": "http",
+							"raw": "https://localhost:8080/api/v0/stories/1?state=APPROVED",
+							"protocol": "https",
 							"host": [
 								"localhost"
 							],
@@ -483,6 +704,44 @@
 								{
 									"key": "state",
 									"value": "APPROVED"
+								},
+								{
+									"key": "rejectionReason",
+									"value": "blabla",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Publish Story",
+					"request": {
+						"method": "PATCH",
+						"header": [],
+						"url": {
+							"raw": "https://localhost:8080/api/v0/stories/1?state=PUBLISHED",
+							"protocol": "https",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"v0",
+								"stories",
+								"1"
+							],
+							"query": [
+								{
+									"key": "state",
+									"value": "PUBLISHED"
+								},
+								{
+									"key": "rejectionReason",
+									"value": "blabla",
+									"disabled": true
 								}
 							]
 						}
@@ -501,7 +760,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{}",
+							"raw": "{\r\n    \"name\": \"MyTopic rocks!\"\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -509,8 +768,8 @@
 							}
 						},
 						"url": {
-							"raw": "http://localhost:8080/api/v0/topics",
-							"protocol": "http",
+							"raw": "https://localhost:8080/api/v0/topics",
+							"protocol": "https",
 							"host": [
 								"localhost"
 							],
@@ -525,40 +784,22 @@
 					"response": []
 				},
 				{
-					"name": "Search Topic by Name",
+					"name": "Create Topic with Parent Topic",
 					"request": {
-						"method": "GET",
+						"method": "POST",
 						"header": [],
-						"url": {
-							"raw": "http://localhost:8080/api/v0/topics?name=bob",
-							"protocol": "http",
-							"host": [
-								"localhost"
-							],
-							"port": "8080",
-							"path": [
-								"api",
-								"v0",
-								"topics"
-							],
-							"query": [
-								{
-									"key": "name",
-									"value": "bob"
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"name\": \"ParentTest2\",\r\n    \"parentTopicID\": 1\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
 								}
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Show Topic",
-					"request": {
-						"method": "GET",
-						"header": [],
+							}
+						},
 						"url": {
-							"raw": "http://localhost:8080/api/v0/topics/1",
-							"protocol": "http",
+							"raw": "https://localhost:8080/api/v0/topics",
+							"protocol": "https",
 							"host": [
 								"localhost"
 							],
@@ -566,8 +807,7 @@
 							"path": [
 								"api",
 								"v0",
-								"topics",
-								"1"
+								"topics"
 							]
 						}
 					},
@@ -580,7 +820,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{}",
+							"raw": "{\r\n    \"name\": \"My new name is cool! :D\"\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -588,8 +828,88 @@
 							}
 						},
 						"url": {
-							"raw": "http://localhost:8080/api/v0/topics/1",
-							"protocol": "http",
+							"raw": "https://localhost:8080/api/v0/topics/4",
+							"protocol": "https",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"v0",
+								"topics",
+								"4"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Topic Parent",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"name\": \"My newer name is cool! :D\",\r\n    \"parentTopicID\": 2\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://localhost:8080/api/v0/topics/4",
+							"protocol": "https",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"v0",
+								"topics",
+								"4"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Search Topic by Name",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "https://localhost:8080/api/v0/topics?name=valid",
+							"protocol": "https",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"v0",
+								"topics"
+							],
+							"query": [
+								{
+									"key": "name",
+									"value": "valid"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Show Topic",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "https://localhost:8080/api/v0/topics/1",
+							"protocol": "https",
 							"host": [
 								"localhost"
 							],
@@ -610,8 +930,8 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "http://localhost:8080/api/v0/topics",
-							"protocol": "http",
+							"raw": "https://localhost:8080/api/v0/topics",
+							"protocol": "https",
 							"host": [
 								"localhost"
 							],
@@ -631,8 +951,8 @@
 						"method": "PATCH",
 						"header": [],
 						"url": {
-							"raw": "http://localhost:8080/api/v0/topics/1",
-							"protocol": "http",
+							"raw": "https://localhost:8080/api/v0/topics/4",
+							"protocol": "https",
 							"host": [
 								"localhost"
 							],
@@ -641,7 +961,7 @@
 								"api",
 								"v0",
 								"topics",
-								"1"
+								"4"
 							]
 						}
 					},
@@ -653,8 +973,8 @@
 						"method": "DELETE",
 						"header": [],
 						"url": {
-							"raw": "http://localhost:8080/api/v0/topics/1",
-							"protocol": "http",
+							"raw": "https://localhost:8080/api/v0/topics/5",
+							"protocol": "https",
 							"host": [
 								"localhost"
 							],
@@ -663,13 +983,97 @@
 								"api",
 								"v0",
 								"topics",
-								"1"
+								"5"
 							]
 						}
 					},
 					"response": []
 				}
 			]
+		},
+		{
+			"name": "Update Story CSRF",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var xsrfCookie = postman.getResponseCookie(\"XSRF-TOKEN\");\r",
+							"postman.setEnvironmentVariable(\"xsrf-token\", xsrfCookie.value);"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "PUT",
+				"header": [
+					{
+						"key": "X-XSRF-TOKEN",
+						"value": "{{xsrf-token}}",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://localhost:8080/api/v0/stories/1",
+					"protocol": "https",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"api",
+						"v0",
+						"stories",
+						"1"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"auth": {
+		"type": "basic",
+		"basic": [
+			{
+				"key": "password",
+				"value": "testCurator",
+				"type": "string"
+			},
+			{
+				"key": "username",
+				"value": "testCurator",
+				"type": "string"
+			}
+		]
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
 		}
 	]
 }

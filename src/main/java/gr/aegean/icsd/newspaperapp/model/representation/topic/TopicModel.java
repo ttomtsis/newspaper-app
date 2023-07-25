@@ -6,6 +6,9 @@ import org.springframework.hateoas.RepresentationModel;
 import java.util.Date;
 import java.util.List;
 
+/**
+ * Representation Model of the Topic Entity
+ */
 public class TopicModel extends RepresentationModel<TopicModel> {
 
 
@@ -13,34 +16,14 @@ public class TopicModel extends RepresentationModel<TopicModel> {
 
     private Date creationDate;
 
-
-    /**
-     * State of the Topic, valid states are declared in
-     * {@link TopicState}
-     *
-     * @see TopicState
-     */
     private TopicState state;
 
     private String name;
 
     private String authorID;
 
-
-    /**
-     * Stories associated with the Topic <br>
-     *
-     * Many Topics can be associated with the same Story <br>
-     * Many Stories can be associated with the same Topic
-     */
     private List<Integer> storiesList;
 
-
-    /**
-     * List of Children Topics <br>
-     *
-     * Each Topic can be a parent to other Topics
-     */
     private List<Integer> topicsList;
 
     private Integer parentTopicID;

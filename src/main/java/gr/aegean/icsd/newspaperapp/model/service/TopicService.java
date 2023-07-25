@@ -3,9 +3,13 @@ package gr.aegean.icsd.newspaperapp.model.service;
 import gr.aegean.icsd.newspaperapp.model.entity.Topic;
 import gr.aegean.icsd.newspaperapp.model.entity.User;
 import gr.aegean.icsd.newspaperapp.model.repository.TopicRepository;
+import gr.aegean.icsd.newspaperapp.security.UserUtils;
 import gr.aegean.icsd.newspaperapp.util.enums.TopicState;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -14,7 +18,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.HashSet;
-import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -62,9 +65,9 @@ public class TopicService {
      * @param parentTopicID (Optional) Parent Topic of the new Topic
      */
     @PreAuthorize("hasAnyAuthority('ROLE_CURATOR', 'ROLE_JOURNALIST')")
-    public void createTopic(@NotBlank String name, Integer parentTopicID) {
+    public Topic createTopic(@NotBlank String name, Integer parentTopicID) {
 
-        String authorID = SecurityContextHolder.getContext().getAuthentication().getName();
+        String authorID = UserUtils.getUsername();
 
         if (parentTopicID == null) {
 
@@ -72,6 +75,7 @@ public class TopicService {
             Topic newTopic = new Topic(name, author);
 
             topicRepository.save(newTopic);
+            return newTopic;
         }
         else {
 
@@ -84,8 +88,10 @@ public class TopicService {
                 Topic newTopic = new Topic(name, author, requestedParentTopic.get());
 
                 topicRepository.save(newTopic);
+                return newTopic;
             }
 
+            throw new RuntimeException("Invalid parent Topic provided");
         }
 
     }
@@ -105,12 +111,11 @@ public class TopicService {
         if (newName.isBlank() && parentTopicID == null) { throw new RuntimeException("No arguments provided"); }
 
         Optional<Topic> requestedTopic = topicRepository.findById(id);
-        String userRole = SecurityContextHolder.getContext().getAuthentication().getAuthorities().toString();
-        String userName = SecurityContextHolder.getContext().getAuthentication().getName();
+        String userName = UserUtils.getUsername();
 
         // Requested Topic does not exist, or requested topic does not belong to this Journalist
         if (requestedTopic.isEmpty() ||
-            (userRole.equals("[ROLE_JOURNALIST]") && !requestedTopic.get().getAuthor().getUsername().equals(userName)) ) {
+            (UserUtils.isJournalist() && !requestedTopic.get().getAuthor().getUsername().equals(userName)) ) {
             throw new RuntimeException("Requested Topic was not found");
         }
 
@@ -228,21 +233,19 @@ public class TopicService {
      * @return A list of all Topics currently in the database
      */
     @Transactional(readOnly = true)
-    public List<Topic> showAllTopics() {
+    public Page<Topic> showAllTopics(@NotNull Pageable pageable) {
 
         String userRole = SecurityContextHolder.getContext().getAuthentication().getAuthorities().toString();
 
-        switch (userRole) {
-            case "[ROLE_ANONYMOUS]" -> {
-                return topicRepository.findAllTopics(allowedVisitorStates);
-            }
-            case "[ROLE_JOURNALIST]" -> {
-                String username = SecurityContextHolder.getContext().getAuthentication().getName();
-                return topicRepository.findAllTopicsForJournalist(allowedJournalistStates, username);
-            }
-            case "[ROLE_CURATOR]" -> {
-                return topicRepository.findAllTopics(allowedCuratorStates);
-            }
+        if (UserUtils.isVisitor()) {
+            return topicRepository.findAllTopics(allowedVisitorStates, pageable);
+        }
+        else if ( UserUtils.isJournalist()) {
+            String username = UserUtils.getUsername();
+            return topicRepository.findAllTopicsForJournalist(allowedJournalistStates, username, pageable);
+        }
+        else if (UserUtils.isCurator()) {
+            return topicRepository.findAllTopics(allowedCuratorStates, pageable);
         }
 
         throw new AccessDeniedException("User with role: " + userRole + " is not supported by this operation");
@@ -259,21 +262,19 @@ public class TopicService {
      * @return List of all Topics matching the provided name
      */
     @Transactional(readOnly = true)
-    public List<Topic> searchTopicByName(@NotBlank String name) {
+    public Page<Topic> searchTopicByName(@NotBlank String name, @NotNull Pageable pageable) {
 
         String userRole = SecurityContextHolder.getContext().getAuthentication().getAuthorities().toString();
 
-        switch (userRole) {
-            case "[ROLE_ANONYMOUS]" -> {
-                return topicRepository.findByNameContainingIgnoreCaseAndStateIn(name, allowedVisitorStates);
-            }
-            case "[ROLE_JOURNALIST]" -> {
-                String username = SecurityContextHolder.getContext().getAuthentication().getName();
-                return topicRepository.findTopicsByNameForJouralist(name, allowedJournalistStates, username);
-            }
-            case "[ROLE_CURATOR]" -> {
-                return topicRepository.findByNameContainingIgnoreCaseAndStateIn(name, allowedCuratorStates);
-            }
+        if (UserUtils.isVisitor()) {
+            return topicRepository.findByNameContainingIgnoreCaseAndStateIn(name, allowedVisitorStates, pageable);
+        }
+        else if (UserUtils.isJournalist()) {
+            String username = UserUtils.getUsername();
+            return topicRepository.findTopicsByNameForJournalist(name, allowedJournalistStates, username, pageable);
+        }
+        else if (UserUtils.isCurator()) {
+            return topicRepository.findByNameContainingIgnoreCaseAndStateIn(name, allowedCuratorStates, pageable);
         }
 
         throw new AccessDeniedException("User with role: " + userRole + " is not supported by this operation");

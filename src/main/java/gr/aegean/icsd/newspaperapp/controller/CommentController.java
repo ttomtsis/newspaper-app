@@ -5,20 +5,23 @@ import gr.aegean.icsd.newspaperapp.model.representation.comment.CommentModel;
 import gr.aegean.icsd.newspaperapp.model.representation.comment.CommentModelAssembler;
 import gr.aegean.icsd.newspaperapp.model.service.CommentService;
 import gr.aegean.icsd.newspaperapp.util.enums.CommentState;
-import gr.aegean.icsd.newspaperapp.util.enums.SortType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.hateoas.PagedModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
-import java.util.List;
+import java.net.URI;
 
 /**
  * Controller that handles requests related to the 'Comment' resource. <br>
- * Maps all operations, except {@link #showAllCommentsForAStory(long, int, int, SortType) showAllCommentsForAStory}, at 'api/v0/comments' <br>
- * @see #showAllCommentsForAStory(long, int, int, SortType)
+ * Maps all operations, except {@link #showAllCommentsForAStory(long, int, int) showAllCommentsForAStory}, at 'api/v0/comments' <br>
+ * @see #showAllCommentsForAStory(long, int, int)
  */
 @RestController
 public class CommentController {
@@ -31,7 +34,7 @@ public class CommentController {
     * The baseMapping string is used instead of the RequestMapping annotation
     * at the class level, <br> solely because of the special mapping required by
     * the showAllCommentsForAStory method.
-    * @see #showAllCommentsForAStory(long, int, int, SortType)
+    * @see #showAllCommentsForAStory(long, int, int)
     */
     private static final String baseMapping = "/api/v0/comments";
 
@@ -67,9 +70,16 @@ public class CommentController {
 
         log.info("New 'create comment' Request");
 
-        service.createComment(newComment.getStoryID(), newComment.getContent());
+        Comment savedComment = service.createComment(newComment.getStoryID(), newComment.getContent());
+        CommentModel savedCommentModel = assembler.toModel(savedComment);
 
-        return new ResponseEntity<>(null, HttpStatus.CREATED);
+        URI location = ServletUriComponentsBuilder.fromCurrentContextPath()
+                .path("api/v0/stories/{storyId}/comments")
+                .buildAndExpand(savedComment.getStory().getId())
+                .toUri();
+
+        return ResponseEntity.created(location).body(savedCommentModel);
+
     }
 
 
@@ -101,8 +111,6 @@ public class CommentController {
      * @param storyId ID of the Story entity that contains the comments
      * @param page Number of the page the client has requested
      * @param size Size of the requested page
-     * @param sortType Type of sorting that the comments will have.
-     *                 Only Sorted according to creation date
      *
      * @return a PagedModel containing the Comment representations, sorted by their creation date in
      * ascending order, and the links to navigate it
@@ -110,17 +118,16 @@ public class CommentController {
     @GetMapping(path = "api/v0/stories/{storyId}/comments", produces = "application/json")
     public ResponseEntity<PagedModel<CommentModel>> showAllCommentsForAStory(@PathVariable long storyId,
                                                                              @RequestParam(defaultValue = "0") int page,
-                                                                             @RequestParam(defaultValue = defaultPageSize) int size,
-                                                                             @RequestParam(defaultValue = "DESC") SortType sortType ) {
+                                                                             @RequestParam(defaultValue = defaultPageSize) int size) {
 
         log.info("New 'show all comments for a story' Request");
-        List<Comment> commentList = service.showCommentsByStory(storyId);
+        Pageable pageable = PageRequest.of(page, size);
 
-        for (Comment comment : commentList) {
-            log.error(comment.getContent() + " - " + comment.getState() + " - " + comment.getCreationDate());
-        }
+        Page<Comment> commentList = service.showCommentsByStory(storyId, pageable);
 
-        return new ResponseEntity<>(null, HttpStatus.OK);
+        PagedModel<CommentModel> commentPagedModel = assembler.createPagedModel(commentList, storyId);
+
+        return new ResponseEntity<>(commentPagedModel, HttpStatus.OK);
     }
 
 
