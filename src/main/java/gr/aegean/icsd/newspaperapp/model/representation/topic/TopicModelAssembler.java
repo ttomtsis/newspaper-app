@@ -17,6 +17,10 @@ import java.util.List;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
+/**
+ * Support class used to create Representation
+ * Models of the Topic Entity
+ */
 @Component
 public class TopicModelAssembler  extends RepresentationModelAssemblerSupport<Topic, TopicModel> {
 
@@ -30,6 +34,14 @@ public class TopicModelAssembler  extends RepresentationModelAssemblerSupport<To
     }
 
 
+    /**
+     * Creates a single Representation Model from the provided
+     * Topic Entity
+     *
+     * @param entity Provided Topic Entity
+     *
+     * @return Representation Model with links attached
+     */
     @Override
     @NonNull
     public TopicModel toModel(@NonNull Topic entity) {
@@ -154,6 +166,13 @@ public class TopicModelAssembler  extends RepresentationModelAssemblerSupport<To
     }
 
 
+    /**
+     * Utility method that creates a PagedModel from an input Page
+     *
+     * @param topicPage Input Page
+     *
+     * @return PagedModel
+     */
     private PagedModel<TopicModel> createPagedModelFromPage ( Page<Topic> topicPage ) {
 
         // Convert Topics inside the page to TopicModels

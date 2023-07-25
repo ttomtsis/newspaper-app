@@ -15,6 +15,10 @@ import java.util.List;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
+/**
+ * Support class used to create Representation
+ * Models of the Comment Entity
+ */
 @Component
 public class CommentModelAssembler extends RepresentationModelAssemblerSupport<Comment, CommentModel> {
 
@@ -27,6 +31,15 @@ public class CommentModelAssembler extends RepresentationModelAssemblerSupport<C
         super(CommentController.class, CommentModel.class);
     }
 
+
+    /**
+     * Creates a single Representation Model from the provided
+     * Comment Entity
+     *
+     * @param entity Provided Comment Entity
+     *
+     * @return Representation Model with links attached
+     */
     @Override
     @NonNull
     public CommentModel toModel(@NonNull Comment entity) {
@@ -61,6 +74,16 @@ public class CommentModelAssembler extends RepresentationModelAssemblerSupport<C
         return newModel;
     }
 
+
+    /**
+     * Create a PagedModel of Comment Representation Models extracted from a Comment Page
+     *
+     * @param commentPage Provided Comment Page
+     * @param parentStoryID ID used to create link to the
+     *                      {@link CommentController#showAllCommentsForAStory(long, int, int)} method
+     *
+     * @return PagedModel of CommentModels with associated links
+     */
     public PagedModel<CommentModel> createPagedModel(Page<Comment> commentPage, long parentStoryID) {
 
         PagedModel<CommentModel> pagedModel = createPagedModelFromPage(commentPage);
@@ -81,6 +104,14 @@ public class CommentModelAssembler extends RepresentationModelAssemblerSupport<C
         return pagedModel;
     }
 
+
+    /**
+     * Utility method that creates a PagedModel from an input Page
+     *
+     * @param commentPage Input Page
+     *
+     * @return PagedModel
+     */
     private PagedModel<CommentModel> createPagedModelFromPage ( Page<Comment> commentPage ) {
 
         // Convert Comments inside the page to CommentModels
@@ -90,4 +121,6 @@ public class CommentModelAssembler extends RepresentationModelAssemblerSupport<C
 
         return PagedModel.of(commentModels, pageMetadata);
     }
+
+
 }

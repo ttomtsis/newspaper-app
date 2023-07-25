@@ -12,65 +12,20 @@ import java.util.List;
 public class TopicModel extends RepresentationModel<TopicModel> {
 
 
-    /**
-     * Primary key of the Topic entity
-     */
     private Long id;
 
-
-    /**
-     * Date the Topic was created, assigned by the server
-     * before persisting the entity in the database. <br>
-     */
     private Date creationDate;
 
-
-    /**
-     * State of the Topic, valid states are declared in
-     * {@link TopicState}
-     *
-     * @see TopicState
-     */
     private TopicState state;
 
-
-    /**
-     * The name of the Topic <br>
-     */
     private String name;
 
-
-    /**
-     * Author of the Topic <br>
-     *
-     * Many Topics can have the same Author <br>
-     * Only one Author per Topic is allowed
-     */
     private String authorID;
 
-
-    /**
-     * Stories associated with the Topic <br>
-     *
-     * Many Topics can be associated with the same Story <br>
-     * Many Stories can be associated with the same Topic
-     */
     private List<Integer> storiesList;
 
-
-    /**
-     * List of Children Topics <br>
-     *
-     * Each Topic can be a parent to other Topics
-     */
     private List<Integer> topicsList;
 
-
-    /**
-     * Parent Topic of the Topic <br>
-     *
-     * Each Topic can be associated with a single parent Topic
-     */
     private Integer parentTopicID;
 
 

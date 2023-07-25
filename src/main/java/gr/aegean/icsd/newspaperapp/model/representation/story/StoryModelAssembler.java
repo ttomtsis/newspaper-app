@@ -17,6 +17,10 @@ import java.util.List;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
+/**
+ * Support class used to create Representation
+ * Models of the Story Entity
+ */
 @Component
 public class StoryModelAssembler  extends RepresentationModelAssemblerSupport<Story, StoryModel> {
 
@@ -87,7 +91,13 @@ public class StoryModelAssembler  extends RepresentationModelAssemblerSupport<St
     }
 
 
-
+    /**
+     * Create a PagedModel of StoryModels from a Page of Stories, with relevant links to navigate it
+     *
+     * @param storyPage Provided Page
+     * 
+     * @return PagedModel of StoryModels with links to navigate it
+     */
     public PagedModel<StoryModel> createPagedModelForShowAllStories(Page<Story> storyPage) {
 
         PagedModel<StoryModel> pagedModel = createPagedModelFromPage(storyPage);
@@ -114,8 +124,15 @@ public class StoryModelAssembler  extends RepresentationModelAssemblerSupport<St
         return pagedModel;
     }
 
-
-
+    
+    /**
+     * Create a PagedModel of StoryModels from a Page of Stories, with relevant links to navigate it
+     *
+     * @param storyPage Provided Page
+     * @param name Name used to create a link to {@link StoryController#showAllStoriesByName(String, int, int)} )}
+     *
+     * @return PagedModel of StoryModels with links to navigate it
+     */
     public PagedModel<StoryModel> createPagedModelForShowAllStoriesByName(Page<Story> storyPage, String name) {
 
         PagedModel<StoryModel> pagedModel = createPagedModelFromPage(storyPage);
@@ -143,7 +160,14 @@ public class StoryModelAssembler  extends RepresentationModelAssemblerSupport<St
     }
 
 
-
+    /**
+     * Create a PagedModel of StoryModels from a Page of Stories, with relevant links to navigate it
+     *
+     * @param storyPage Provided Page
+     * @param content Content used to create a link to {@link StoryController#showAllStoriesByContent(String, int, int)}
+     *
+     * @return PagedModel of StoryModels with links to navigate it
+     */
     public PagedModel<StoryModel> createPagedModelForShowAllStoriesByContent(Page<Story> storyPage, String content) {
 
         PagedModel<StoryModel> pagedModel = createPagedModelFromPage(storyPage);
@@ -170,8 +194,16 @@ public class StoryModelAssembler  extends RepresentationModelAssemblerSupport<St
         return pagedModel;
     }
 
-
-
+    
+    /**
+     * Create a PagedModel of StoryModels from a Page of Stories, with relevant links to navigate it
+     *
+     * @param storyPage Provided Page
+     * @param name Name used to create a link to {@link StoryController#showAllStoriesByNameAndContent(String, String, int, int)} )}
+     * @param content Content used to create a link to {@link StoryController#showAllStoriesByNameAndContent(String, String, int, int)}
+     *
+     * @return PagedModel of StoryModels with links to navigate it
+     */
     public PagedModel<StoryModel> createPagedModelForShowAllStoriesByNameAndContent(Page<Story> storyPage, String name, String content) {
 
         PagedModel<StoryModel> pagedModel = createPagedModelFromPage(storyPage);
@@ -199,7 +231,15 @@ public class StoryModelAssembler  extends RepresentationModelAssemblerSupport<St
     }
 
 
-
+    /**
+     * Create a PagedModel of StoryModels from a Page of Stories, with relevant links to navigate it
+     *
+     * @param storyPage Provided Page
+     * @param minDate Date used to create a link to {@link StoryController#showAllStoriesByDate(Date, Date, int, int)}
+     * @param maxDate Date used to create a link to {@link StoryController#showAllStoriesByDate(Date, Date, int, int)}
+     *
+     * @return PagedModel of StoryModels with links to navigate it
+     */
     public PagedModel<StoryModel> createPagedModelForShowAllStoriesByDate(Page<Story> storyPage, Date minDate, Date maxDate) {
 
         PagedModel<StoryModel> pagedModel = createPagedModelFromPage(storyPage);
@@ -228,7 +268,14 @@ public class StoryModelAssembler  extends RepresentationModelAssemblerSupport<St
     }
 
 
-
+    /**
+     * Create a PagedModel of StoryModels from a Page of Stories, with relevant links to navigate it
+     *
+     * @param storyPage Provided Page
+     * @param state State used to create a link to {@link StoryController#showAllStoriesByState(StoryState, int, int)}
+     *
+     * @return PagedModel of StoryModels with links to navigate it
+     */
     public PagedModel<StoryModel> createPagedModelForShowAllStoriesByState(Page<Story> storyPage, StoryState state) {
 
         PagedModel<StoryModel> pagedModel = createPagedModelFromPage(storyPage);
@@ -255,8 +302,15 @@ public class StoryModelAssembler  extends RepresentationModelAssemblerSupport<St
         return pagedModel;
     }
 
-
-
+    
+    /**
+     * Create a PagedModel of StoryModels from a Page of Stories, with relevant links to navigate it
+     *
+     * @param storyPage Provided Page
+     * @param topicId ID used to create a link to {@link StoryController#showATopicsStories(long, int, int)}
+     *
+     * @return PagedModel of StoryModels with links to navigate it
+     */
     public PagedModel<StoryModel> createPagedModelForShowATopicsStories(Page<Story> storyPage, long topicId) {
 
         PagedModel<StoryModel> pagedModel = createPagedModelFromPage(storyPage);
@@ -284,7 +338,13 @@ public class StoryModelAssembler  extends RepresentationModelAssemblerSupport<St
     }
 
 
-
+    /**
+     * Utility method that creates a PagedModel from an input Page
+     *
+     * @param storyPage Input Page
+     *
+     * @return PagedModel
+     */
     private PagedModel<StoryModel> createPagedModelFromPage (Page<Story> storyPage ) {
 
         // Convert Comments inside the page to CommentModels
