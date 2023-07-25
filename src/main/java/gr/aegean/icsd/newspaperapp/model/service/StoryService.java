@@ -5,11 +5,14 @@ import gr.aegean.icsd.newspaperapp.model.entity.Topic;
 import gr.aegean.icsd.newspaperapp.model.entity.User;
 import gr.aegean.icsd.newspaperapp.model.repository.StoryRepository;
 import gr.aegean.icsd.newspaperapp.model.repository.TopicRepository;
+import gr.aegean.icsd.newspaperapp.security.UserUtils;
 import gr.aegean.icsd.newspaperapp.util.enums.StoryState;
 import gr.aegean.icsd.newspaperapp.util.enums.TopicState;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -96,16 +99,16 @@ public class StoryService {
      * @param topicIDs (Optional) List of Topics this Story will belong to
      */
     @PreAuthorize("hasAuthority('ROLE_JOURNALIST')")
-    public void createStory(@NotBlank String storyName, @NotBlank String storyContent, List<Integer> topicIDs) {
+    public Story createStory(@NotBlank String storyName, @NotBlank String storyContent, List<Integer> topicIDs) {
 
-        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        String username = UserUtils.getUsername();
 
         if (topicIDs == null)  {
 
             Story newStory = new Story(storyName, new User(username), storyContent);
 
             storyRepository.save(newStory);
-
+            return newStory;
         }
         else {
 
@@ -113,7 +116,7 @@ public class StoryService {
             Story newStory = new Story(storyName, new User(username), storyContent, topicsList);
 
             storyRepository.save(newStory);
-
+            return newStory;
         }
 
     }
@@ -131,7 +134,7 @@ public class StoryService {
     @PreAuthorize("hasAuthority('ROLE_JOURNALIST')")
     public void updateStory(@Positive Long storyID, String newName, String newContent, List<Integer> topicIDs) {
 
-        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        String username = UserUtils.getUsername();
 
         Optional<Story> savedStory = storyRepository.findById(storyID);
 
@@ -169,21 +172,22 @@ public class StoryService {
      * @return List of Stories matching the provided name
      */
     @Transactional(readOnly = true)
-    public List<Story> findStoriesByName(@NotBlank String name) {
+    public Page<Story> findStoriesByName(@NotBlank String name, @NotNull Pageable pageable) {
 
         String userRole = SecurityContextHolder.getContext().getAuthentication().getAuthorities().toString();
 
-        switch (userRole) {
-            case "[ROLE_ANONYMOUS]" -> {
-                return storyRepository.findByNameContainingIgnoreCaseAndStateIn(name, allowedVisitorStates);
-            }
-            case "[ROLE_JOURNALIST]" -> {
-                String username = SecurityContextHolder.getContext().getAuthentication().getName();
-                return storyRepository.findByNameForJouralist(name, allowedJournalistStates, username);
-            }
-            case "[ROLE_CURATOR]" -> {
-                return storyRepository.findByNameContainingIgnoreCaseAndStateIn(name, allowedCuratorStates);
-            }
+        if (UserUtils.isVisitor()) {
+            return storyRepository.findByNameContainingIgnoreCaseAndStateIn
+                    (name, allowedVisitorStates, pageable);
+        }
+        else if (UserUtils.isJournalist()) {
+            String username = UserUtils.getUsername();
+            return storyRepository.findByNameForJournalist
+                    (name, allowedJournalistStates, username, pageable);
+        }
+        else if (UserUtils.isCurator()) {
+            return storyRepository.findByNameContainingIgnoreCaseAndStateIn
+                    (name, allowedCuratorStates, pageable);
         }
 
         throw new AccessDeniedException("User with role: " + userRole + " is not supported by this operation");
@@ -200,21 +204,22 @@ public class StoryService {
      * @return List of Stories matching the provided content
      */
     @Transactional(readOnly = true)
-    public List<Story> findStoriesByContent(@NotBlank String content) {
+    public Page<Story> findStoriesByContent(@NotBlank String content, @NotNull Pageable pageable) {
 
         String userRole = SecurityContextHolder.getContext().getAuthentication().getAuthorities().toString();
 
-        switch (userRole) {
-            case "[ROLE_ANONYMOUS]" -> {
-                return storyRepository.findByContentContainingIgnoreCaseAndStateIn(content, allowedVisitorStates);
-            }
-            case "[ROLE_JOURNALIST]" -> {
-                String username = SecurityContextHolder.getContext().getAuthentication().getName();
-                return storyRepository.findByContentForJouralist(content, allowedJournalistStates, username);
-            }
-            case "[ROLE_CURATOR]" -> {
-                return storyRepository.findByContentContainingIgnoreCaseAndStateIn(content, allowedCuratorStates);
-            }
+        if (UserUtils.isVisitor()) {
+            return storyRepository.findByContentContainingIgnoreCaseAndStateIn
+                    (content, allowedVisitorStates, pageable);
+        }
+        else if (UserUtils.isJournalist()) {
+            String username = UserUtils.getUsername();
+            return storyRepository.findByContentForJournalist
+                    (content, allowedJournalistStates, username, pageable);
+        }
+        else if (UserUtils.isCurator()) {
+            return storyRepository.findByContentContainingIgnoreCaseAndStateIn
+                    (content, allowedCuratorStates, pageable);
         }
 
         throw new AccessDeniedException("User with role: " + userRole + " is not supported by this operation");
@@ -229,21 +234,19 @@ public class StoryService {
      * @return List of all Stories currently persisted in the database
      */
     @Transactional(readOnly = true)
-    public List<Story> findAllStories() {
+    public Page<Story> findAllStories(@NotNull Pageable pageable) {
 
         String userRole = SecurityContextHolder.getContext().getAuthentication().getAuthorities().toString();
 
-        switch (userRole) {
-            case "[ROLE_ANONYMOUS]" -> {
-                return storyRepository.findAllStories(allowedVisitorStates);
-            }
-            case "[ROLE_JOURNALIST]" -> {
-                String username = SecurityContextHolder.getContext().getAuthentication().getName();
-                return storyRepository.findAllStoriesForJournalist(allowedJournalistStates, username);
-            }
-            case "[ROLE_CURATOR]" -> {
-                return storyRepository.findAllStories(allowedCuratorStates);
-            }
+        if (UserUtils.isVisitor()) {
+            return storyRepository.findAllStories(allowedVisitorStates, pageable);
+        }
+        else if (UserUtils.isJournalist()) {
+            String username = UserUtils.getUsername();
+            return storyRepository.findAllStoriesForJournalist(allowedJournalistStates, username, pageable);
+        }
+        else if (UserUtils.isCurator()) {
+            return storyRepository.findAllStories(allowedCuratorStates, pageable);
         }
 
         throw new AccessDeniedException("User with role: " + userRole + " is not supported by this operation");
@@ -261,21 +264,21 @@ public class StoryService {
      * @return List of Stories matching the provided name and content
      */
     @Transactional(readOnly = true)
-    public List<Story> findStoriesByContentAndName(@NotBlank String name, @NotBlank String content) {
+    public Page<Story> findStoriesByContentAndName(@NotBlank String name, @NotBlank String content,
+                                                   @NotNull Pageable pageable) {
 
         String userRole = SecurityContextHolder.getContext().getAuthentication().getAuthorities().toString();
 
-        switch (userRole) {
-            case "[ROLE_ANONYMOUS]" -> {
-                return storyRepository.findByNameContainingIgnoreCaseAndStateInAndContentIgnoreCase(name, allowedVisitorStates, content);
-            }
-            case "[ROLE_JOURNALIST]" -> {
-                String username = SecurityContextHolder.getContext().getAuthentication().getName();
-                return storyRepository.findByNameAndContentForJouralist(name, allowedJournalistStates, username, content);
-            }
-            case "[ROLE_CURATOR]" -> {
-                return storyRepository.findByNameContainingIgnoreCaseAndStateInAndContentIgnoreCase(name, allowedCuratorStates, content);
-            }
+        if (UserUtils.isVisitor()) {
+            return storyRepository.findByNameAndContent(name, allowedVisitorStates, content, pageable);
+        }
+        else if (UserUtils.isJournalist()) {
+            String username = UserUtils.getUsername();
+            return storyRepository.findByNameAndContentForJournalist
+                    (name, allowedJournalistStates, username, content, pageable);
+        }
+        else if (UserUtils.isCurator()) {
+            return storyRepository.findByNameAndContent(name, allowedCuratorStates, content, pageable);
         }
 
         throw new AccessDeniedException("User with role: " + userRole + " is not supported by this operation");
@@ -294,21 +297,23 @@ public class StoryService {
      */
 
     @Transactional(readOnly = true)
-    public List<Story> findStoriesByDateRange(@NotNull Date minDate, @NotNull Date maxDate) {
+    public Page<Story> findStoriesByDateRange(@NotNull Date minDate, @NotNull Date maxDate,
+                                              @NotNull Pageable pageable) {
 
         String userRole = SecurityContextHolder.getContext().getAuthentication().getAuthorities().toString();
 
-        switch (userRole) {
-            case "[ROLE_ANONYMOUS]" -> {
-                return storyRepository.findByCreationDateBetweenAndStateIn(minDate, maxDate, allowedVisitorStates);
-            }
-            case "[ROLE_JOURNALIST]" -> {
-                String username = SecurityContextHolder.getContext().getAuthentication().getName();
-                return storyRepository.findByDateRangeForJouralist(minDate, maxDate, allowedJournalistStates, username);
-            }
-            case "[ROLE_CURATOR]" -> {
-                return storyRepository.findByCreationDateBetweenAndStateIn(minDate, maxDate, allowedCuratorStates);
-            }
+        if (UserUtils.isVisitor()) {
+            return storyRepository.findByCreationDateBetweenAndStateIn
+                    (minDate, maxDate, allowedVisitorStates, pageable);
+        }
+        else if (UserUtils.isJournalist()) {
+            String username = UserUtils.getUsername();
+            return storyRepository.findByDateRangeForJournalist
+                    (minDate, maxDate, allowedJournalistStates, username, pageable);
+        }
+        else if (UserUtils.isCurator()) {
+            return storyRepository.findByCreationDateBetweenAndStateIn
+                    (minDate, maxDate, allowedCuratorStates, pageable);
         }
 
         throw new AccessDeniedException("User with role: " + userRole + " is not supported by this operation");
@@ -326,19 +331,15 @@ public class StoryService {
      */
     @Transactional(readOnly = true)
     @PreAuthorize("hasAnyAuthority('ROLE_CURATOR', 'ROLE_JOURNALIST')")
-    public List<Story> findStoriesByState(@NotBlank StoryState state) {
+    public Page<Story> findStoriesByState(@NotNull StoryState state, @NotNull Pageable pageable) {
 
-        String userRole = SecurityContextHolder.getContext().getAuthentication().getAuthorities().toString();
-
-        switch (userRole) {
-            case "[ROLE_JOURNALIST]" -> {
-                String username = SecurityContextHolder.getContext().getAuthentication().getName();
-                if (allowedJournalistStates.contains(state)) {return storyRepository.findByState(state);}
-                else {return storyRepository.findByStateForJouralist(state, username);}
-            }
-            case "[ROLE_CURATOR]" -> {
-                if (allowedCuratorStates.contains(state)) {return storyRepository.findByState(state);}
-            }
+        if (UserUtils.isJournalist()) {
+            String username = UserUtils.getUsername();
+            if (allowedJournalistStates.contains(state)) {return storyRepository.findByState(state, pageable);}
+            else {return storyRepository.findByStateForJournalist(state, username, pageable);}
+        }
+        else if (UserUtils.isCurator()) {
+            if (allowedCuratorStates.contains(state)) {return storyRepository.findByState(state, pageable);}
         }
 
         return null;
@@ -354,21 +355,22 @@ public class StoryService {
      * @return List of Stories associated with the Topic
      */
     @Transactional(readOnly = true)
-    public List<Story> findStoriesByTopicID(@Positive long topicID) {
+    public Page<Story> findStoriesByTopicID(@Positive long topicID, @NotNull Pageable pageable) {
 
         String userRole = SecurityContextHolder.getContext().getAuthentication().getAuthorities().toString();
 
-        switch (userRole) {
-            case "[ROLE_ANONYMOUS]" -> {
-                return storyRepository.findByTopicID(topicID, allowedVisitorStates);
-            }
-            case "[ROLE_JOURNALIST]" -> {
-                String username = SecurityContextHolder.getContext().getAuthentication().getName();
-                return storyRepository.findByTopicIDForJournalist(topicID, allowedJournalistStates, username);
-            }
-            case "[ROLE_CURATOR]" -> {
-                return storyRepository.findByTopicID(topicID, allowedCuratorStates);
-            }
+        if (UserUtils.isVisitor()) {
+            return storyRepository.findByTopicID
+                    (topicID, allowedVisitorStates, pageable);
+        }
+        else if (UserUtils.isJournalist()) {
+            String username = UserUtils.getUsername();
+            return storyRepository.findByTopicIDForJournalist
+                    (topicID, allowedJournalistStates, username, pageable);
+        }
+        else if (UserUtils.isCurator()) {
+            return storyRepository.findByTopicID
+                    (topicID, allowedCuratorStates, pageable);
         }
 
         throw new AccessDeniedException("User with role: " + userRole + " is not supported by this operation");

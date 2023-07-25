@@ -7,13 +7,15 @@ import gr.aegean.icsd.newspaperapp.model.service.StoryService;
 import gr.aegean.icsd.newspaperapp.util.enums.StoryState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.hateoas.PagedModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Date;
-import java.util.List;
 
 /**
  * Controller that handles requests related to the 'Story' resource. <br>
@@ -71,10 +73,11 @@ public class StoryController {
     public ResponseEntity<StoryModel> createStory(@RequestBody StoryModel newStory) {
 
         log.info("New 'create story' Request");
+        Story requestedStory = service.createStory(newStory.getName(), newStory.getContent(), newStory.getTopicsList());
 
-        service.createStory(newStory.getName(), newStory.getContent(), newStory.getTopics());
+        StoryModel storyModel = assembler.toModel(requestedStory);
 
-        return new ResponseEntity<>(null, HttpStatus.CREATED);
+        return new ResponseEntity<>(storyModel, HttpStatus.CREATED);
 
     }
 
@@ -92,7 +95,7 @@ public class StoryController {
 
         log.info("New 'update story' Request");
 
-        service.updateStory(id, updatedStory.getName(), updatedStory.getContent(), updatedStory.getTopics());
+        service.updateStory(id, updatedStory.getName(), updatedStory.getContent(), updatedStory.getTopicsList());
 
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
 
@@ -113,13 +116,12 @@ public class StoryController {
                                                                  @RequestParam(defaultValue = defaultPageSize) int size) {
 
         log.info("New 'show all stories' Request");
-        List<Story> storyList = service.findAllStories();
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Story> storyPage = service.findAllStories(pageable);
 
-        for (Story s : storyList){
-            log.error(s.getName() +" - " + s.getState() + " - " + s.getAuthor().getUsername());
-        }
+        PagedModel<StoryModel> storyPagedModel = assembler.createPagedModelForShowAllStories(storyPage);
 
-        return new ResponseEntity<>(null, HttpStatus.OK);
+        return new ResponseEntity<>(storyPagedModel, HttpStatus.OK);
     }
 
 
@@ -139,13 +141,13 @@ public class StoryController {
                                                                        @RequestParam(defaultValue = defaultPageSize) int size) {
 
         log.info("New 'show all stories filtered by name' Request");
-        List<Story> storyList = service.findStoriesByName(name);
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Story> storyPage = service.findStoriesByName(name, pageable);
 
-        for (Story s : storyList){
-            log.error(s.getName() +" - " + s.getState() + " - " + s.getAuthor().getUsername());
-        }
+        PagedModel<StoryModel> storyPagedModel = assembler.createPagedModelForShowAllStoriesByName(storyPage, name);
 
-        return new ResponseEntity<>(null, HttpStatus.OK);
+
+        return new ResponseEntity<>(storyPagedModel, HttpStatus.OK);
     }
 
 
@@ -165,13 +167,13 @@ public class StoryController {
                                                                           @RequestParam(defaultValue = defaultPageSize) int size) {
 
         log.info("New 'show all stories filtered by content' Request");
-        List<Story> storyList = service.findStoriesByContent(content);
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Story> storyPage = service.findStoriesByContent(content, pageable);
 
-        for (Story s : storyList){
-            log.error(s.getName() +" - " + s.getState() + " - " + s.getAuthor().getUsername());
-        }
 
-        return new ResponseEntity<>(null, HttpStatus.OK);
+        PagedModel<StoryModel> storyPagedModel = assembler.createPagedModelForShowAllStoriesByContent(storyPage, content);
+
+        return new ResponseEntity<>(storyPagedModel, HttpStatus.OK);
     }
 
 
@@ -193,13 +195,13 @@ public class StoryController {
                                                                                  @RequestParam(defaultValue = defaultPageSize) int size) {
 
         log.info("New 'show all stories filtered by content and name' Request");
-        List<Story> storyList = service.findStoriesByContentAndName(name, content);
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Story> storyPage = service.findStoriesByContentAndName(name, content, pageable);
 
-        for (Story s : storyList){
-            log.error(s.getName() +" - " + s.getState() + " - " + s.getAuthor().getUsername());
-        }
+        PagedModel<StoryModel> storyPagedModel = assembler.createPagedModelForShowAllStoriesByNameAndContent
+                                                    (storyPage, name, content);
 
-        return new ResponseEntity<>(null, HttpStatus.OK);
+        return new ResponseEntity<>(storyPagedModel, HttpStatus.OK);
     }
 
 
@@ -221,13 +223,13 @@ public class StoryController {
                                                                        @RequestParam(defaultValue = defaultPageSize) int size) {
 
         log.info("New 'show all stories filtered by a range of dates' Request");
-        List<Story> storyList = service.findStoriesByDateRange(minDate, maxDate);
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Story> storyPage = service.findStoriesByDateRange(minDate, maxDate, pageable);
 
-        for (Story s : storyList){
-            log.error(s.getName() +" - " + s.getCreationDate() + " - " + s.getAuthor().getUsername() );
-        }
+        PagedModel<StoryModel> storyPagedModel = assembler.createPagedModelForShowAllStoriesByDate
+                (storyPage, minDate, maxDate);
 
-        return new ResponseEntity<>(null, HttpStatus.OK);
+        return new ResponseEntity<>(storyPagedModel, HttpStatus.OK);
     }
 
 
@@ -247,13 +249,13 @@ public class StoryController {
                                                                         @RequestParam(defaultValue = defaultPageSize) int size) {
 
         log.info("New 'show all stories filtered by state' Request");
-        List<Story> storyList = service.findStoriesByState(state);
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Story> storyPage = service.findStoriesByState(state, pageable);
 
-        for (Story s : storyList){
-            log.error(s.getName() +" - " + s.getState() + " - " + s.getAuthor().getUsername() );
-        }
+        PagedModel<StoryModel> storyPagedModel = assembler.createPagedModelForShowAllStoriesByState
+                (storyPage, state);
 
-        return new ResponseEntity<>(null, HttpStatus.OK);
+        return new ResponseEntity<>(storyPagedModel, HttpStatus.OK);
     }
 
 
@@ -271,13 +273,13 @@ public class StoryController {
                                                                     @RequestParam(defaultValue = "0") int page,
                                                                     @RequestParam(defaultValue = defaultPageSize) int size) {
         log.info("New 'show a topic's stories' Request");
-        List<Story> storyList = service.findStoriesByTopicID(topicId);
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Story> storyPage = service.findStoriesByTopicID(topicId, pageable);
 
-        for (Story s : storyList){
-            log.error(s.getName() +" - " + s.getState() + " - " + s.getAuthor().getUsername() );
-        }
+        PagedModel<StoryModel> storyPagedModel = assembler.createPagedModelForShowATopicsStories
+                (storyPage, topicId);
 
-        return new ResponseEntity<>(null, HttpStatus.OK);
+        return new ResponseEntity<>(storyPagedModel, HttpStatus.OK);
     }
 
 
