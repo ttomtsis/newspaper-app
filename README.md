@@ -4,9 +4,6 @@ This is part of a university course from University of the Aegean,
 aiming to provide students with practical experience on software engineering best practices
 and tools. 
 
-Feel free to check the project's wiki page for information on the overall architecture and more details about the
-design process
-
 
 ### Concept
 
@@ -28,12 +25,11 @@ Java Spring Boot application that exposes a RESTful API servicing the day to day
 * JUnit 5
 
 # Getting Started
-This project is still in the early stages of development and considered very immature, however if you want to 
-check on the current progress follow the steps below:
 * Clone the repository `git clone https://github.com/ttomtsis/newspaper-app/tree/master`
 * Build with maven, or the maven wrapper `./mvnw clean package`
 * Go to the target directory `cd ./target`
 * Run using java `java -jar NewspaperApp.0.0.1-SNAPSHOT.jar`
+* 
 # Endpoints
 ### Story
 
