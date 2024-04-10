@@ -26,6 +26,12 @@ Java Spring Boot application that exposes a RESTful API servicing the day to day
 * JUnit 5
 
 # Getting Started
+In order for the application to function properly you need to have the following installed on your machine:
+
+* Java 17+
+* Maven 3.9.1+, or you can use the provided maven wrapper
+* MySQL 8.0+ database
+  
 ### Installation
 * Clone the repository `git clone https://github.com/ttomtsis/newspaper-app/tree/master`
 * Build with maven, or the maven wrapper `./mvnw clean package`
