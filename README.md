@@ -61,7 +61,6 @@ To configure the application's TLS settings and use your own certificates, you m
 * `DELETE /stories/{id}` -- Delete story 
 * `GET /stories/ name = {name}` -- Search story, 
 can take multiple parameters as input: content, minDate, maxDate, state
-
 * `GET /stories` -- Show all stories
 * `PATCH /stories/ {id} ? state = {state}` -- Submit, approve, reject, publish story
   also see Issue #10
