@@ -29,7 +29,7 @@ Java Spring Boot application that exposes a RESTful API servicing the day to day
 * Build with maven, or the maven wrapper `./mvnw clean package`
 * Go to the target directory `cd ./target`
 * Run using java `java -jar NewspaperApp.0.0.1-SNAPSHOT.jar`
-* 
+  
 # Endpoints
 ### Story
 
